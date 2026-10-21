@@ -12,7 +12,8 @@ you start on the yellow pad in the middle of the greybox test map.
 | Jump, vault, climb, wall flip | Space (does what fits: vault a low thin obstacle, climb onto a ledge up to 3.1 m, run up and flip off a taller wall, else jump; in the air, Space grabs a ledge in front of you) |
 | Flip | double-tap Space: front flip (one of three at random); hold S and double-tap for a backflip |
 | Wall run | sprint and jump along a wall; Space during it kicks off away from the wall |
-| Run up a wall | sprint (Shift) straight into a tall wall: he runs up it while Shift is held, grabs the top if he reaches it (W pulls up); Space (or S + Space) backflips off |
+| Run backwards | S on its own: he backs up still facing the camera |
+| Run up a wall | sprint (Shift) straight into a tall wall: two fast steps up it, then he drops unless you press Space (or S + Space) to backflip off; grabs the top if he reaches it (W pulls up) |
 | Hang | jump into a ledge (or Space at one over 1.7 m) to grab it; W or Space climbs up, S or C lets go, A / D shimmy along |
 | Roll / slide | C or Ctrl (slide when sprinting, and he keeps sliding while there's a bar over him); press it just before landing to roll out of a big fall |
 | Get up | after a fall too high (over 9.5 m without a roll) he ragdolls; W gets him back up |

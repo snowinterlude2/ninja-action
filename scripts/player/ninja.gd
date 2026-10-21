@@ -25,6 +25,8 @@ const WORLD_MASK := 1
 @export var ground_accel := 14.0
 @export var ground_decel := 18.0
 @export var turn_speed := 12.0
+## Running backwards (S on its own).
+@export var backpedal_speed := 3.2
 @export_group("Air")
 @export var jump_height := 1.25
 @export var fall_gravity_scale := 1.6
@@ -80,9 +82,10 @@ const WORLD_MASK := 1
 ## How far his body stays off the wall while wall running (meters, body center to wall), so he doesn't sink in.
 @export var wall_run_gap := 0.55
 @export_group("Wall run up")
-## Sprinting (Shift) into a tall wall runs straight up it, as long as Shift is held, up to this long (seconds).
-@export var wall_up_time := 4.0
-@export var wall_up_speed := 3.0
+## Sprinting (Shift) into a tall wall runs fast straight up it for this long (seconds), then he falls unless
+## Space backflips him off first (or he reaches the top and grabs it).
+@export var wall_up_time := 0.6
+@export var wall_up_speed := 5.5
 @export var wall_up_gap := 0.42
 ## Space (or back + Space) while running up a wall backflips off it: this hard away and this hard up.
 @export var wall_backflip_push := 4.5
@@ -199,13 +202,18 @@ func _ground(delta: float) -> void:
 	_coyote = coyote_time
 	var input := move_input()
 	var flat := Vector3(velocity.x, 0.0, velocity.z)
-	var target := input * _target_speed()
+	# S on its own runs backwards, still facing where the camera looks
+	var raw := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var backing: bool = raw.y > 0.5 and absf(raw.x) < 0.5
+	var target := input * (_target_speed() if not backing else backpedal_speed)
 	var rate := ground_accel if target.length() > flat.length() else ground_decel
 	flat = flat.move_toward(target, rate * delta)
 	velocity.x = flat.x
 	velocity.z = flat.z
 	velocity.y = -0.5
-	if input.length() > 0.05:
+	if backing:
+		_face(-input, delta)
+	elif input.length() > 0.05:
 		_face(input, delta)
 
 	if _buffer > 0.0:
@@ -226,19 +234,27 @@ func _ground(delta: float) -> void:
 		else:
 			_roll(max(speed, run_speed))
 		return
+	if backing and flat.length() > 0.15:
+		# the run (or walk) played backwards
+		var clip := "walk" if flat.length() < (walk_speed + backpedal_speed) * 0.5 else "run"
+		if current_clip != clip + "_back":
+			current_clip = clip + "_back"
+			_anim.play(LIB_NAME + "/" + clip, 0.2, -1.0, true)
+		_anim.speed_scale = clamp(flat.length() / CLIP_SPEED[clip], 0.6, 1.5)
+		return
 	_locomotion_anim(flat.length())
 
 
-## A roll out of a run: one of the roll clips at random, carrying him on at most of his speed.
+## A quick dodge roll (Dark Souls style): low, about 3 to 4 m, straight back up.
 func _roll(speed: float) -> void:
-	var clip: String = ["roll", "roll_b"].pick_random()
-	var anim := LIB.get_animation(clip)
-	var play := 1.25
-	_start_action(clip, {
-		"warp_distance": speed * 0.6 * anim.length / play,
-		"speed": play,
+	# roll the way the stick points, straight away
+	if move_input().length() > 0.1:
+		_face(move_input(), 1.0, 1000.0)
+	_start_action("roll", {
+		"warp_distance": clamp(speed * 0.75, 3.0, 4.0),
+		"speed": 1.35,
 		"low": true,
-		"cancel_at": 0.72 if clip == "roll" else 0.8,
+		"cancel_at": 0.8,
 		"keep_speed": true,
 	})
 	_sfx.play("whoosh", -4.0)
@@ -277,8 +293,6 @@ func _jump() -> void:
 		clip = "jump_run" if randf() < 0.6 else "jump_long"
 	_play(clip, 0.1, 1.0, true)
 	_sfx.play("jump", -4.0)
-	if randf() < 0.35:
-		_sfx.voice("grunt")
 
 
 func _air(delta: float) -> void:
@@ -341,7 +355,6 @@ func _air_flip() -> void:
 	var anim := LIB.get_animation(clip)
 	_play(clip, 0.1, clamp(anim.length / air, 0.8, 1.8), true)
 	_sfx.play("whoosh")
-	_sfx.voice("grunt")
 
 
 func _land() -> void:
@@ -422,15 +435,15 @@ func _try_vault() -> bool:
 	_start_action(clip, {
 		"keys_f": [[0.0, 0.0], [landed, past]],
 		"linear_f": true,
-		"keys_y": [[0.0, 0.0], [over_from, height + 0.1], [over_to, height + 0.05], [landed, 0.0]],
+		# the hand on the top is about 0.4 m below the hips, and the pose keeps the hips 0.93 m over the body's
+		# origin: put the hand on the obstacle, not the feet (that had him vaulting a body length up in the air)
+		"keys_y": [[0.0, 0.0], [over_from, max(height - 0.53, 0.0)], [over_to, max(height - 0.55, 0.0)], [landed, 0.0]],
 		"end_at": landed + 0.1,
 		"pass_through": true,
 		"keep_speed": true,
 		"speed": play,
 	})
 	_sfx.play("whoosh", -8.0)
-	if randf() < 0.4:
-		_sfx.voice("grunt", -3.0)
 	return true
 
 
@@ -483,7 +496,6 @@ func _try_climb(reach: float, low := -1.0) -> bool:
 	var hang_y: float = height - HANG_HANDS
 	var hang_f: float = wall - HANG_GAP
 	var info := {"top": top.position.y, "normal": hit.normal}
-	_sfx.voice("grunt", -4.0)
 	if is_on_floor():
 		_start_action("climb_jump", {
 			"keys_f": [[0.0, 0.0], [0.45, hang_f], [1.5, hang_f]],
@@ -637,7 +649,6 @@ func _wall_run(delta: float) -> void:
 		_leave_wall()
 		_play(wall_kick_clip_left if _wall_on_left else wall_kick_clip_right, 0.1, 1.0, true)
 		_sfx.play("whoosh")
-		_sfx.voice("grunt")
 		return
 	if off_wall or _wall_timer > wall_run_time or Input.is_action_just_pressed("crouch") or is_on_floor():
 		velocity += _wall_normal * 1.0
@@ -673,8 +684,8 @@ func _try_wall_up() -> bool:
 	rotation.y = atan2(hit.normal.x, hit.normal.z)
 	velocity = Vector3(0.0, wall_up_speed, 0.0)
 	_set_state(State.WALL_UP)
-	_play("wall_up_start", 0.1, 1.0, true)
-	_sfx.voice("grunt", -3.0)
+	var anim := LIB.get_animation("wall_up_run")
+	_play("wall_up_run", 0.1, anim.length / wall_up_time, true)
 	return true
 
 
@@ -690,13 +701,8 @@ func _wall_up(delta: float) -> void:
 	var hold: float = clamp((wall_up_gap - gap) * 10.0, -3.0, 3.0)
 	velocity = n * hold
 	# slows down over the last part of the run up
-	velocity.y = wall_up_speed * (1.0 - smoothstep(wall_up_time * 0.75, wall_up_time, _wall_up_timer))
+	velocity.y = wall_up_speed * (1.0 - smoothstep(wall_up_time * 0.6, wall_up_time, _wall_up_timer))
 	rotation.y = lerp_angle(rotation.y, atan2(n.x, n.z), clamp(10.0 * delta, 0.0, 1.0))
-	if current_clip == "wall_up_start" and not _anim.is_playing():
-		_play("wall_up", 0.1)
-	if current_clip == "wall_up":
-		# the loop's feet climb about 2.4 m/s at normal speed
-		_anim.speed_scale = clamp(velocity.y / 2.4, 0.5, 1.6)
 	# Space, or back + Space: backflip off the wall
 	if _buffer > 0.0:
 		_buffer = 0.0
@@ -707,7 +713,6 @@ func _wall_up(delta: float) -> void:
 		var air: float = velocity.y / _gravity * (1.0 + 1.0 / sqrt(fall_gravity_scale))
 		_play("flip_back", 0.1, clamp(anim.length / air, 0.8, 1.8), true)
 		_sfx.play("whoosh")
-		_sfx.voice("grunt")
 		return
 	# reached the top: grab it (and pull up while W is held)
 	if _try_climb(HANG_HANDS + 0.3, 0.0):

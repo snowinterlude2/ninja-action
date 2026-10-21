@@ -245,14 +245,14 @@ func _test_new_moves() -> void:
 		_note()
 		if ninja.state == Ninja.State.WALL_UP:
 			up_y = max(up_y, ninja.global_position.y)
-			if up_y > 2.5 and not flipped:
+			if up_y > 1.8 and not flipped:
 				Input.action_press("move_back")
 				_tap("jump")
 				flipped = true
 		if flipped and ninja.state == Ninja.State.GROUND:
 			break
 	_release_all()
-	_check("run up the wall and backflip off", up_y > 2.5 and _seen.has("flip_back"), "clips %s  height %.1f" % [_seen.keys(), up_y])
+	_check("run up the wall and backflip off", up_y > 1.8 and _seen.has("flip_back"), "clips %s  height %.1f" % [_seen.keys(), up_y])
 	await _frames(60)
 	# sprint at the 3 m pillar: run up and pull up onto it
 	_place(Vector3(18, 0.1, 12.0), PI)
@@ -266,7 +266,7 @@ func _test_new_moves() -> void:
 		if ninja.global_position.y > 2.9 and ninja.state == Ninja.State.GROUND:
 			break
 	_release_all()
-	_check("run up the pillar and climb onto it", ninja.global_position.y > 2.9 and _seen.has("wall_up_start"), "clips %s  at %s" % [_seen.keys(), _v(ninja.global_position)])
+	_check("run up the pillar and climb onto it", ninja.global_position.y > 2.9 and _seen.has("wall_up_run"), "clips %s  at %s" % [_seen.keys(), _v(ninja.global_position)])
 	await _frames(60)
 	# slide under the long bar
 	_place(Vector3(0, 0.1, -19), 0.0)

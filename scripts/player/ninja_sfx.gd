@@ -11,7 +11,6 @@ const SETS := {
 	"land": ["land"],
 	"whoosh": ["whoosh_1", "whoosh_2", "whoosh_3"],
 	"impact": ["impact_1", "impact_2"],
-	"grunt": ["grunt_2", "grunt_3", "grunt_5"],
 	"pain": ["pain_1", "pain_2", "pain_6", "pain_9"],
 	"pain_big": ["pain_big_2", "pain_big_5"],
 }
@@ -62,7 +61,7 @@ func play(kind: String, db := 0.0) -> void:
 	_start(p, kind, db)
 
 
-## Grunts and pain cries, one at a time (a new one cuts the last).
+## Pain cries, one at a time (a new one cuts the last).
 func voice(kind: String, db := 0.0) -> void:
 	_start(_voice, kind, db - 2.0)
 

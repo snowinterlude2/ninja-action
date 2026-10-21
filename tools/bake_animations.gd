@@ -59,10 +59,8 @@ const CLIPS := {
 	"land_roll": ["n_falling_to_roll", ROOT, false, [0.5, 2.13]],
 	"land_roll_old": ["aap_falling_to_roll", ROOT, false],
 	"land_hard": ["aap_hard_landing", ROOT, false],
-	# rolls out of a run (one is picked at random each time): run to rolling, and stand to roll without its
-	# standing start
-	"roll": ["n_run_to_rolling", ROOT, false, [0.5, 2.3]],
-	"roll_b": ["n_stand_to_roll", ROOT, false, [0.6, 2.05]],
+	# a quick, low dodge roll: just the dive, the roll and the rise out of stand to roll
+	"roll": ["n_stand_to_roll", ROOT, false, [0.85, 1.95]],
 	"roll_side": ["rolling", ROOT, false],
 	"slide": ["sliding", ROOT, false],
 	# one-hand side vault, without the source's wind-up at the start and the standing tail
@@ -89,6 +87,8 @@ const CLIPS := {
 	"jump_long": ["n_jumping_1", AIR, false, [0.0, 1.1]],
 	# running straight up a wall: the plant, then one step of the climb looped (its seam blended smooth)
 	"wall_up_start": ["n_sprint_to_wall_climb", AIR, false, [0.3, 0.733]],
+	# the two running steps up the wall from the run wall flip
+	"wall_up_run": ["run_wall_flip", AIR, false, [0.45, 0.84]],
 	"wall_up": ["n_sprint_to_wall_climb", AIR, true, [0.733, 1.033], true],
 	# getting up off the ground after a ragdoll (both start on his back)
 	"get_up": ["n_standing_up", INPLACE, false, [1.0, 3.9]],
