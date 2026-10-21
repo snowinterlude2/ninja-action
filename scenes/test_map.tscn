@@ -1,502 +1,506 @@
 [gd_scene format=3]
 
-[ext_resource type="Shader" path="res://shaders/grid.gdshader" id="1_p21b5"]
-[ext_resource type="PackedScene" path="res://scenes/ninja.tscn" id="2_bdpbv"]
-[ext_resource type="Script" path="res://scripts/player/ninja.gd" id="3_ss0f2"]
-[ext_resource type="Script" path="res://scripts/debug/debug_hud.gd" id="4_kddbv"]
+[ext_resource type="Shader" path="res://shaders/grid.gdshader" id="1_bdpbv"]
+[ext_resource type="PackedScene" path="res://scenes/ninja.tscn" id="2_ss0f2"]
+[ext_resource type="Script" path="res://scripts/player/ninja.gd" id="3_kddbv"]
+[ext_resource type="Script" path="res://scripts/debug/debug_hud.gd" id="4_pw728"]
+[ext_resource type="Script" path="res://scripts/ui/game_menu.gd" id="5_6gsqv"]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_pw728"]
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_u56q5"]
 
-[sub_resource type="Sky" id="Sky_6gsqv"]
-sky_material = SubResource("ProceduralSkyMaterial_pw728")
+[sub_resource type="Sky" id="Sky_4mr4y"]
+sky_material = SubResource("ProceduralSkyMaterial_u56q5")
 
-[sub_resource type="Environment" id="Environment_u56q5"]
+[sub_resource type="Environment" id="Environment_36mki"]
 background_mode = 2
-sky = SubResource("Sky_6gsqv")
+sky = SubResource("Sky_4mr4y")
 ambient_light_source = 3
 tonemap_mode = 2
 ssao_enabled = true
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4mr4y"]
-render_priority = 0
-shader = ExtResource("1_p21b5")
-shader_parameter/albedo = Color(0.52, 0.53, 0.55, 1)
-shader_parameter/line_width = null
-shader_parameter/line_strength = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_36mki"]
-render_priority = 0
-shader = ExtResource("1_p21b5")
-shader_parameter/albedo = Color(0.62, 0.62, 0.6, 1)
-shader_parameter/line_width = null
-shader_parameter/line_strength = null
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_6751p"]
 render_priority = 0
-shader = ExtResource("1_p21b5")
-shader_parameter/albedo = Color(0.85, 0.85, 0.3, 1)
+shader = ExtResource("1_bdpbv")
+shader_parameter/albedo = Color(0.52, 0.53, 0.55, 1)
 shader_parameter/line_width = null
 shader_parameter/line_strength = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_o5gif"]
 render_priority = 0
-shader = ExtResource("1_p21b5")
-shader_parameter/albedo = Color(0.9, 0.55, 0.2, 1)
+shader = ExtResource("1_bdpbv")
+shader_parameter/albedo = Color(0.62, 0.62, 0.6, 1)
 shader_parameter/line_width = null
 shader_parameter/line_strength = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_uutrq"]
 render_priority = 0
-shader = ExtResource("1_p21b5")
-shader_parameter/albedo = Color(0.3, 0.5, 0.85, 1)
+shader = ExtResource("1_bdpbv")
+shader_parameter/albedo = Color(0.85, 0.85, 0.3, 1)
 shader_parameter/line_width = null
 shader_parameter/line_strength = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_34ald"]
 render_priority = 0
-shader = ExtResource("1_p21b5")
-shader_parameter/albedo = Color(0.25, 0.7, 0.65, 1)
+shader = ExtResource("1_bdpbv")
+shader_parameter/albedo = Color(0.9, 0.55, 0.2, 1)
 shader_parameter/line_width = null
 shader_parameter/line_strength = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_a5r8l"]
 render_priority = 0
-shader = ExtResource("1_p21b5")
-shader_parameter/albedo = Color(0.3, 0.2, 0.2, 1)
+shader = ExtResource("1_bdpbv")
+shader_parameter/albedo = Color(0.3, 0.5, 0.85, 1)
 shader_parameter/line_width = null
 shader_parameter/line_strength = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_lcvph"]
 render_priority = 0
-shader = ExtResource("1_p21b5")
-shader_parameter/albedo = Color(0.55, 0.4, 0.8, 1)
+shader = ExtResource("1_bdpbv")
+shader_parameter/albedo = Color(0.25, 0.7, 0.65, 1)
 shader_parameter/line_width = null
 shader_parameter/line_strength = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_eukwx"]
 render_priority = 0
-shader = ExtResource("1_p21b5")
+shader = ExtResource("1_bdpbv")
+shader_parameter/albedo = Color(0.3, 0.2, 0.2, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lt4wf"]
+render_priority = 0
+shader = ExtResource("1_bdpbv")
+shader_parameter/albedo = Color(0.55, 0.4, 0.8, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_i5tuv"]
+render_priority = 0
+shader = ExtResource("1_bdpbv")
 shader_parameter/albedo = Color(0.8, 0.3, 0.3, 1)
 shader_parameter/line_width = null
 shader_parameter/line_strength = null
 
-[node name="TestMap" type="Node3D" unique_id=1804349367]
+[node name="TestMap" type="Node3D" unique_id=1797940735]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1881269869]
-environment = SubResource("Environment_u56q5")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=224638272]
+environment = SubResource("Environment_36mki")
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1146042700]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=488722373]
 transform = Transform3D(0.81915206, 0.43938506, -0.36868784, 0, 0.64278764, 0.76604444, 0.57357645, -0.62750685, 0.5265408, 0, 0, 0)
 shadow_enabled = true
 directional_shadow_max_distance = 80.0
 
-[node name="Geometry" type="Node3D" parent="." unique_id=1592909280]
+[node name="Geometry" type="Node3D" parent="." unique_id=1184897211]
 
-[node name="Floor" type="CSGBox3D" parent="Geometry" unique_id=1026113370]
+[node name="Floor" type="CSGBox3D" parent="Geometry" unique_id=1382843409]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 use_collision = true
 size = Vector3(80, 1, 80)
-material = SubResource("ShaderMaterial_4mr4y")
+material = SubResource("ShaderMaterial_6751p")
 
-[node name="Wall0" type="CSGBox3D" parent="Geometry" unique_id=1019308903]
+[node name="Wall0" type="CSGBox3D" parent="Geometry" unique_id=822010925]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 40.5)
 use_collision = true
 size = Vector3(82, 4, 1)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="Wall1" type="CSGBox3D" parent="Geometry" unique_id=1738067220]
+[node name="Wall1" type="CSGBox3D" parent="Geometry" unique_id=1873406550]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -40.5)
 use_collision = true
 size = Vector3(82, 4, 1)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="Wall2" type="CSGBox3D" parent="Geometry" unique_id=1118454841]
+[node name="Wall2" type="CSGBox3D" parent="Geometry" unique_id=293367210]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.5, 2, 0)
 use_collision = true
 size = Vector3(1, 4, 82)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="Wall3" type="CSGBox3D" parent="Geometry" unique_id=1131319874]
+[node name="Wall3" type="CSGBox3D" parent="Geometry" unique_id=321762515]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.5, 2, 0)
 use_collision = true
 size = Vector3(1, 4, 82)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="SpawnPad" type="CSGBox3D" parent="Geometry" unique_id=1938994466]
+[node name="SpawnPad" type="CSGBox3D" parent="Geometry" unique_id=901801021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
 use_collision = true
 size = Vector3(3, 0.02, 3)
-material = SubResource("ShaderMaterial_6751p")
+material = SubResource("ShaderMaterial_uutrq")
 
-[node name="1 Vault lane" type="Node3D" parent="Geometry" unique_id=1738456324]
+[node name="1 Vault lane" type="Node3D" parent="Geometry" unique_id=2069527625]
 
-[node name="Label_1__VAULT_LANE" type="Label3D" parent="Geometry/1 Vault lane" unique_id=557809003]
+[node name="Label_1__VAULT_LANE" type="Label3D" parent="Geometry/1 Vault lane" unique_id=1454319854]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3, -6)
 pixel_size = 0.01
 billboard = 1
 text = "1  VAULT LANE"
 font_size = 64
 
-[node name="Vault1_60cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=633523766]
+[node name="Vault1_60cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=988460782]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.3, -10)
 use_collision = true
 size = Vector3(3, 0.6, 0.4)
-material = SubResource("ShaderMaterial_o5gif")
+material = SubResource("ShaderMaterial_34ald")
 
-[node name="Label_0_6_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=476288649]
+[node name="Label_0_6_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=103572290]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1, -10)
 billboard = 1
 text = "0.6 m"
 font_size = 64
 
-[node name="Vault2_90cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=131549417]
+[node name="Vault2_90cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=1226739995]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.45, -15)
 use_collision = true
 size = Vector3(3, 0.9, 0.5)
-material = SubResource("ShaderMaterial_o5gif")
+material = SubResource("ShaderMaterial_34ald")
 
-[node name="Label_0_9_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=1346657933]
+[node name="Label_0_9_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=1499699289]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.3, -15)
 billboard = 1
 text = "0.9 m"
 font_size = 64
 
-[node name="Vault3_100cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=201986495]
+[node name="Vault3_100cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=2002774383]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.5, -20)
 use_collision = true
 size = Vector3(3, 1, 0.8)
-material = SubResource("ShaderMaterial_o5gif")
+material = SubResource("ShaderMaterial_34ald")
 
-[node name="Label_1_0_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=723333667]
+[node name="Label_1_0_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=2071247703]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.4, -20)
 billboard = 1
 text = "1.0 m"
 font_size = 64
 
-[node name="Vault4_150cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=1000555810]
+[node name="Vault4_150cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=671974539]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.75, -25)
 use_collision = true
 size = Vector3(3, 1.5, 0.4)
-material = SubResource("ShaderMaterial_o5gif")
+material = SubResource("ShaderMaterial_34ald")
 
-[node name="Label_1_5_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=50297954]
+[node name="Label_1_5_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=270380612]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.9, -25)
 billboard = 1
 text = "1.5 m"
 font_size = 64
 
-[node name="Vault5_110cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=1094964105]
+[node name="Vault5_110cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=216573166]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.55, -30)
 use_collision = true
 size = Vector3(3, 1.1, 1.2)
-material = SubResource("ShaderMaterial_o5gif")
+material = SubResource("ShaderMaterial_34ald")
 
-[node name="Label_1_1_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=2027279923]
+[node name="Label_1_1_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=1764269424]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.5, -30)
 billboard = 1
 text = "1.1 m"
 font_size = 64
 
-[node name="2 Jump gaps" type="Node3D" parent="Geometry" unique_id=1092137786]
+[node name="2 Jump gaps" type="Node3D" parent="Geometry" unique_id=1736041376]
 
-[node name="Label_2__JUMP_GAPS" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=173353686]
+[node name="Label_2__JUMP_GAPS" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=1056974474]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 4, -4)
 pixel_size = 0.01
 billboard = 1
 text = "2  JUMP GAPS"
 font_size = 64
 
-[node name="Ramp" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=950617435]
+[node name="Ramp" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=1412610391]
 transform = Transform3D(1, 0, 0, 0, 0.9486833, -0.31622776, 0, 0.31622776, 0.9486833, 14, 0.81026334, -7.063246)
 use_collision = true
 size = Vector3(3, 0.4, 6.3245554)
-material = SubResource("ShaderMaterial_uutrq")
+material = SubResource("ShaderMaterial_a5r8l")
 
-[node name="Platform1" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=2013827350]
+[node name="Platform1" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=1271409103]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -12)
 use_collision = true
 size = Vector3(3, 2, 4)
-material = SubResource("ShaderMaterial_uutrq")
+material = SubResource("ShaderMaterial_a5r8l")
 
-[node name="Platform2" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=1001685605]
+[node name="Platform2" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=1374128254]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -17.5)
 use_collision = true
 size = Vector3(3, 2, 3)
-material = SubResource("ShaderMaterial_uutrq")
+material = SubResource("ShaderMaterial_a5r8l")
 
-[node name="Label_gap_2_m" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=922132858]
+[node name="Label_gap_2_m" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=1312964540]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -15.2)
 pixel_size = 0.006
 billboard = 1
 text = "gap 2 m"
 font_size = 64
 
-[node name="Platform3" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=204916077]
+[node name="Platform3" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=102019212]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -24)
 use_collision = true
 size = Vector3(3, 2, 3)
-material = SubResource("ShaderMaterial_uutrq")
+material = SubResource("ShaderMaterial_a5r8l")
 
-[node name="Label_gap_3_5_m" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=148644965]
+[node name="Label_gap_3_5_m" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=1691279858]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -21.7)
 pixel_size = 0.006
 billboard = 1
 text = "gap 3.5 m"
 font_size = 64
 
-[node name="Platform4" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=984496000]
+[node name="Platform4" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=1650590649]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -32.5)
 use_collision = true
 size = Vector3(3, 2, 4)
-material = SubResource("ShaderMaterial_uutrq")
+material = SubResource("ShaderMaterial_a5r8l")
 
-[node name="Label_gap_5_m" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=1765907583]
+[node name="Label_gap_5_m" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=1268868007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -29.7)
 pixel_size = 0.006
 billboard = 1
 text = "gap 5 m"
 font_size = 64
 
-[node name="3 Wall run alley" type="Node3D" parent="Geometry" unique_id=1785439600]
+[node name="3 Wall run alley" type="Node3D" parent="Geometry" unique_id=303352358]
 
-[node name="Label_3__WALL_RUN_ALLEY" type="Label3D" parent="Geometry/3 Wall run alley" unique_id=649009613]
+[node name="Label_3__WALL_RUN_ALLEY" type="Label3D" parent="Geometry/3 Wall run alley" unique_id=1148077014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 8)
 pixel_size = 0.01
 billboard = 1
 text = "3  WALL RUN ALLEY"
 font_size = 64
 
-[node name="AlleyWallL" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=1498516589]
+[node name="AlleyWallL" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=2131529271]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 3, 21)
 use_collision = true
 size = Vector3(0.5, 6, 22)
-material = SubResource("ShaderMaterial_34ald")
+material = SubResource("ShaderMaterial_lcvph")
 
-[node name="AlleyWallR" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=2006646470]
+[node name="AlleyWallR" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=59860579]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.25, 3, 21)
 use_collision = true
 size = Vector3(0.5, 6, 22)
-material = SubResource("ShaderMaterial_34ald")
+material = SubResource("ShaderMaterial_lcvph")
 
-[node name="Label_3b__WALL_RUN_ACROSS" type="Label3D" parent="Geometry/3 Wall run alley" unique_id=1808041687]
+[node name="Label_3b__WALL_RUN_ACROSS" type="Label3D" parent="Geometry/3 Wall run alley" unique_id=142195804]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6, 10)
 pixel_size = 0.01
 billboard = 1
 text = "3b  WALL RUN ACROSS"
 font_size = 64
 
-[node name="LedgeStart" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=1985310701]
+[node name="LedgeStart" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=964330938]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.75, 11.5)
 use_collision = true
 size = Vector3(3, 1.5, 3)
-material = SubResource("ShaderMaterial_34ald")
+material = SubResource("ShaderMaterial_lcvph")
 
-[node name="LedgeEnd" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=739486498]
+[node name="LedgeEnd" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=1896565240]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.75, 26.5)
 use_collision = true
 size = Vector3(3, 1.5, 3)
-material = SubResource("ShaderMaterial_34ald")
+material = SubResource("ShaderMaterial_lcvph")
 
-[node name="RunWall" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=538209359]
+[node name="RunWall" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=870444463]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 3, 19)
 use_collision = true
 size = Vector3(0.5, 6, 18)
-material = SubResource("ShaderMaterial_34ald")
+material = SubResource("ShaderMaterial_lcvph")
 
-[node name="NoTouchFloor" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=630502348]
+[node name="NoTouchFloor" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=325148769]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.01, 19)
 use_collision = true
 size = Vector3(3, 0.02, 12)
-material = SubResource("ShaderMaterial_a5r8l")
+material = SubResource("ShaderMaterial_eukwx")
 
-[node name="4-5 Drop tower" type="Node3D" parent="Geometry" unique_id=349893313]
+[node name="4-5 Drop tower" type="Node3D" parent="Geometry" unique_id=1883297902]
 
-[node name="Label_4-5__DROP_TOWER" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=1226562756]
+[node name="Label_4-5__DROP_TOWER" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=1154049801]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 18, 12)
 pixel_size = 0.01
 billboard = 1
 text = "4-5  DROP TOWER"
 font_size = 64
 
-[node name="Pillar_3m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=869784616]
+[node name="Pillar_3m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=217946069]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1.5, 18)
 use_collision = true
 size = Vector3(3, 3, 3)
-material = SubResource("ShaderMaterial_lcvph")
+material = SubResource("ShaderMaterial_lt4wf")
 
-[node name="Label_3_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=1477155095]
+[node name="Label_3_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=2007027276]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 3.6, 16.4)
 pixel_size = 0.006
 billboard = 1
 text = "3 m"
 font_size = 64
 
-[node name="Pillar_6m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=1108266364]
+[node name="Pillar_6m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=746394955]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 3, 18)
 use_collision = true
 size = Vector3(3, 6, 3)
-material = SubResource("ShaderMaterial_lcvph")
+material = SubResource("ShaderMaterial_lt4wf")
 
-[node name="Label_6_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=1559114917]
+[node name="Label_6_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=1444985589]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 6.6, 16.4)
 pixel_size = 0.006
 billboard = 1
 text = "6 m"
 font_size = 64
 
-[node name="Pillar_10m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=471397101]
+[node name="Pillar_10m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=2139950446]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 5, 18)
 use_collision = true
 size = Vector3(3, 10, 3)
-material = SubResource("ShaderMaterial_lcvph")
+material = SubResource("ShaderMaterial_lt4wf")
 
-[node name="Label_10_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=236489639]
+[node name="Label_10_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=1391458886]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 10.6, 16.4)
 pixel_size = 0.006
 billboard = 1
 text = "10 m"
 font_size = 64
 
-[node name="Pillar_16m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=1433562611]
+[node name="Pillar_16m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=1205924241]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 8, 18)
 use_collision = true
 size = Vector3(3, 16, 3)
-material = SubResource("ShaderMaterial_lcvph")
+material = SubResource("ShaderMaterial_lt4wf")
 
-[node name="Label_16_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=658608353]
+[node name="Label_16_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=375237051]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 16.6, 16.4)
 pixel_size = 0.006
 billboard = 1
 text = "16 m"
 font_size = 64
 
-[node name="6 Wall flip and slopes" type="Node3D" parent="Geometry" unique_id=70614825]
+[node name="6 Wall flip and slopes" type="Node3D" parent="Geometry" unique_id=557724981]
 
-[node name="Label_6__WALL_FLIP" type="Label3D" parent="Geometry/6 Wall flip and slopes" unique_id=1018413164]
+[node name="Label_6__WALL_FLIP" type="Label3D" parent="Geometry/6 Wall flip and slopes" unique_id=373439160]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 7, 18)
 pixel_size = 0.01
 billboard = 1
 text = "6  WALL FLIP"
 font_size = 64
 
-[node name="TallWall" type="CSGBox3D" parent="Geometry/6 Wall flip and slopes" unique_id=1051632529]
+[node name="TallWall" type="CSGBox3D" parent="Geometry/6 Wall flip and slopes" unique_id=315888540]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 3, 18)
 use_collision = true
 size = Vector3(1, 6, 8)
-material = SubResource("ShaderMaterial_eukwx")
+material = SubResource("ShaderMaterial_i5tuv")
 
-[node name="Slope20" type="CSGBox3D" parent="Geometry/6 Wall flip and slopes" unique_id=1913108535]
+[node name="Slope20" type="CSGBox3D" parent="Geometry/6 Wall flip and slopes" unique_id=307123076]
 transform = Transform3D(1, 0, 0, 0, 0.93887633, -0.34425464, 0, 0.34425464, 0.93887633, -24, 0.91222477, -9.0688505)
 use_collision = true
 size = Vector3(4, 0.4, 6.3906183)
-material = SubResource("ShaderMaterial_4mr4y")
+material = SubResource("ShaderMaterial_6751p")
 
-[node name="Slope35" type="CSGBox3D" parent="Geometry/6 Wall flip and slopes" unique_id=39284844]
+[node name="Slope35" type="CSGBox3D" parent="Geometry/6 Wall flip and slopes" unique_id=1801467294]
 transform = Transform3D(1, 0, 0, 0, 0.8192319, -0.5734623, 0, 0.5734623, 0.8192319, -30, 1.5861536, -8.614693)
 use_collision = true
 size = Vector3(4, 0.4, 6.1032777)
-material = SubResource("ShaderMaterial_4mr4y")
+material = SubResource("ShaderMaterial_6751p")
 
-[node name="Label_slopes_20°___35°" type="Label3D" parent="Geometry/6 Wall flip and slopes" unique_id=2109627089]
+[node name="Label_slopes_20°___35°" type="Label3D" parent="Geometry/6 Wall flip and slopes" unique_id=1327185971]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 4.5, -8)
 pixel_size = 0.006
 billboard = 1
 text = "slopes 20° / 35°"
 font_size = 64
 
-[node name="7 Slide under" type="Node3D" parent="Geometry" unique_id=1660299634]
+[node name="7 Slide under" type="Node3D" parent="Geometry" unique_id=1153343352]
 
-[node name="Label_7__SLIDE_UNDER" type="Label3D" parent="Geometry/7 Slide under" unique_id=5052193]
+[node name="Label_7__SLIDE_UNDER" type="Label3D" parent="Geometry/7 Slide under" unique_id=1646538664]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -8)
 pixel_size = 0.01
 billboard = 1
 text = "7  SLIDE UNDER"
 font_size = 64
 
-[node name="SlideBar1" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1988171095]
+[node name="SlideBar1" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=727374901]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -12)
 use_collision = true
 size = Vector3(3, 0.5, 0.3)
-material = SubResource("ShaderMaterial_o5gif")
+material = SubResource("ShaderMaterial_34ald")
 
-[node name="SlidePostL1" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=269883926]
+[node name="SlidePostL1" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=787887641]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.75, -12)
 use_collision = true
 size = Vector3(0.2, 1.5, 0.2)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="SlidePostR1" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1452467355]
+[node name="SlidePostR1" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=917918139]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.75, -12)
 use_collision = true
 size = Vector3(0.2, 1.5, 0.2)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="SlideBar2" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=2024620881]
+[node name="SlideBar2" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1603954114]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, -18)
 use_collision = true
 size = Vector3(3, 0.5, 0.3)
-material = SubResource("ShaderMaterial_o5gif")
+material = SubResource("ShaderMaterial_34ald")
 
-[node name="SlidePostL2" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1847463384]
+[node name="SlidePostL2" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1804747805]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.725, -18)
 use_collision = true
 size = Vector3(0.2, 1.45, 0.2)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="SlidePostR2" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1044957673]
+[node name="SlidePostR2" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1660691292]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.725, -18)
 use_collision = true
 size = Vector3(0.2, 1.45, 0.2)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="SlideBar3" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1614173356]
+[node name="SlideBar3" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=702039033]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -24)
 use_collision = true
 size = Vector3(3, 0.5, 2)
-material = SubResource("ShaderMaterial_o5gif")
+material = SubResource("ShaderMaterial_34ald")
 
-[node name="SlidePostL3" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1400512929]
+[node name="SlidePostL3" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=589102725]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0.75, -24)
 use_collision = true
 size = Vector3(0.2, 1.5, 0.2)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="SlidePostR3" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=799993505]
+[node name="SlidePostR3" type="CSGBox3D" parent="Geometry/7 Slide under" unique_id=1823475056]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 0.75, -24)
 use_collision = true
 size = Vector3(0.2, 1.5, 0.2)
-material = SubResource("ShaderMaterial_36mki")
+material = SubResource("ShaderMaterial_o5gif")
 
-[node name="Teleports" type="Node3D" parent="." unique_id=651734753]
+[node name="Teleports" type="Node3D" parent="." unique_id=892932815]
 
-[node name="Spawn" type="Marker3D" parent="Teleports" unique_id=240555753]
+[node name="Spawn" type="Marker3D" parent="Teleports" unique_id=1876479808]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
 
-[node name="Station1" type="Marker3D" parent="Teleports" unique_id=1667230048]
+[node name="Station1" type="Marker3D" parent="Teleports" unique_id=120052948]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.1, -4)
 
-[node name="Station2" type="Marker3D" parent="Teleports" unique_id=453455259]
+[node name="Station2" type="Marker3D" parent="Teleports" unique_id=285918853]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.1, -1)
 
-[node name="Station3" type="Marker3D" parent="Teleports" unique_id=1668471791]
+[node name="Station3" type="Marker3D" parent="Teleports" unique_id=1203332578]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.1, 5)
 
-[node name="Station4" type="Marker3D" parent="Teleports" unique_id=84691015]
+[node name="Station4" type="Marker3D" parent="Teleports" unique_id=847966449]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 22, 6.1, 18)
 
-[node name="Station5" type="Marker3D" parent="Teleports" unique_id=471530418]
+[node name="Station5" type="Marker3D" parent="Teleports" unique_id=1263913522]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 30, 16.1, 18)
 
-[node name="Station6" type="Marker3D" parent="Teleports" unique_id=374665135]
+[node name="Station6" type="Marker3D" parent="Teleports" unique_id=1131160766]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -17, 0.1, 18)
 
-[node name="Station7" type="Marker3D" parent="Teleports" unique_id=1319800945]
+[node name="Station7" type="Marker3D" parent="Teleports" unique_id=1672601386]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -4)
 
-[node name="Ninja" type="CharacterBody3D" parent="." unique_id=1055903650 instance=ExtResource("2_bdpbv")]
+[node name="Ninja" type="CharacterBody3D" parent="." unique_id=2002506390 instance=ExtResource("2_ss0f2")]
 collision_layer = 2
 floor_snap_length = 0.3
-script = ExtResource("3_ss0f2")
+script = ExtResource("3_kddbv")
 
-[node name="DebugHud" type="CanvasLayer" parent="." unique_id=850792344]
-script = ExtResource("4_kddbv")
+[node name="DebugHud" type="CanvasLayer" parent="." unique_id=256116724]
+script = ExtResource("4_pw728")
+
+[node name="GameMenu" type="CanvasLayer" parent="." unique_id=568311587]
+script = ExtResource("5_6gsqv")

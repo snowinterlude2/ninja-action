@@ -59,8 +59,8 @@ const CLIPS := {
 	"land_roll": ["n_falling_to_roll", ROOT, false, [0.5, 2.13]],
 	"land_roll_old": ["aap_falling_to_roll", ROOT, false],
 	"land_hard": ["aap_hard_landing", ROOT, false],
-	# a quick, low dodge roll: just the dive, the roll and the rise out of stand to roll
-	"roll": ["n_stand_to_roll", ROOT, false, [0.85, 1.95]],
+	# the roll (C, and landing a big fall): snow's Sprinting Forward Roll
+	"roll": ["n_sprint_roll", ROOT, false],
 	"roll_side": ["rolling", ROOT, false],
 	"slide": ["sliding", ROOT, false],
 	# one-hand side vault, without the source's wind-up at the start and the standing tail

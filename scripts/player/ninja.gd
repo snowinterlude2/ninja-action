@@ -22,15 +22,16 @@ const WORLD_MASK := 1
 @export var walk_speed := 1.65
 @export var run_speed := 4.4
 @export var sprint_speed := 6.6
-@export var ground_accel := 14.0
-@export var ground_decel := 18.0
-@export var turn_speed := 12.0
+## Lower = heavier: he takes longer to get up to speed and to stop, and turns wider the faster he goes.
+@export var ground_accel := 9.0
+@export var ground_decel := 11.0
+@export var turn_speed := 10.0
 ## Running backwards (S on its own).
 @export var backpedal_speed := 3.2
 @export_group("Air")
 @export var jump_height := 1.25
 @export var fall_gravity_scale := 1.6
-@export var air_control := 0.35
+@export var air_control := 0.2
 @export var coyote_time := 0.12
 @export var jump_buffer := 0.15
 ## Press crouch this long (seconds) before landing to roll out of a fall.
@@ -214,7 +215,8 @@ func _ground(delta: float) -> void:
 	if backing:
 		_face(-input, delta)
 	elif input.length() > 0.05:
-		_face(input, delta)
+		# momentum: at a sprint he can't spin on the spot
+		_face(input, delta, turn_speed * lerp(1.0, 0.45, clamp(flat.length() / sprint_speed, 0.0, 1.0)))
 
 	if _buffer > 0.0:
 		_buffer = 0.0
@@ -245,16 +247,16 @@ func _ground(delta: float) -> void:
 	_locomotion_anim(flat.length())
 
 
-## A quick dodge roll (Dark Souls style): low, about 3 to 4 m, straight back up.
+## The roll (C / Ctrl): always the sprinting forward roll, the way the stick points.
 func _roll(speed: float) -> void:
 	# roll the way the stick points, straight away
 	if move_input().length() > 0.1:
 		_face(move_input(), 1.0, 1000.0)
+	# the clip covers 5.7 m at a sprint; from slower it goes less far
 	_start_action("roll", {
-		"warp_distance": clamp(speed * 0.75, 3.0, 4.0),
-		"speed": 1.35,
+		"warp_distance": clamp(speed * 0.9, 3.5, 5.7),
 		"low": true,
-		"cancel_at": 0.8,
+		"cancel_at": 0.85,
 		"keep_speed": true,
 	})
 	_sfx.play("whoosh", -4.0)
@@ -292,7 +294,6 @@ func _jump() -> void:
 	if speed > run_speed * 0.7:
 		clip = "jump_run" if randf() < 0.6 else "jump_long"
 	_play(clip, 0.1, 1.0, true)
-	_sfx.play("jump", -4.0)
 
 
 func _air(delta: float) -> void:
@@ -354,7 +355,6 @@ func _air_flip() -> void:
 	var air: float = velocity.y / _gravity * (1.0 + 1.0 / sqrt(fall_gravity_scale))
 	var anim := LIB.get_animation(clip)
 	_play(clip, 0.1, clamp(anim.length / air, 0.8, 1.8), true)
-	_sfx.play("whoosh")
 
 
 func _land() -> void:
@@ -363,19 +363,10 @@ func _land() -> void:
 	var rolled := _t - _crouch_at <= roll_window
 	if last_drop >= ragdoll_drop_rolled or (last_drop >= ragdoll_drop and not rolled):
 		_start_ragdoll(_impact)
-	elif last_drop >= safe_drop and rolled:
-		_start_action("land_roll", {"xz_scale": clamp(max(speed, 3.0) / 3.7, 0.8, 1.4), "low": true, "cancel_at": 0.75, "keep_speed": true})
-		_sfx.play("land")
-		_sfx.play("whoosh", -6.0)
-	elif last_drop >= hard_drop:
-		velocity = Vector3.ZERO
-		_start_action("land_hard", {"cancel_at": 0.55})
-		_sfx.play("impact")
 	elif last_drop >= safe_drop:
-		velocity.x *= 0.3
-		velocity.z *= 0.3
-		_start_action("land_hard", {"speed": 1.6, "cancel_at": 0.3})
+		# medium and high falls roll out on their own, carrying the fall forward
 		_sfx.play("land")
+		_roll(max(speed, run_speed))
 	else:
 		_set_state(State.GROUND)
 		_sfx.play("land", -6.0 if last_drop < 1.0 else 0.0)
@@ -646,7 +637,6 @@ func _wall_run(delta: float) -> void:
 		velocity.y = wall_jump_up
 		_leave_wall()
 		_play(wall_kick_clip_left if _wall_on_left else wall_kick_clip_right, 0.1, 1.0, true)
-		_sfx.play("whoosh")
 		return
 	if off_wall or _wall_timer > wall_run_time or Input.is_action_just_pressed("crouch") or is_on_floor():
 		velocity += _wall_normal * 1.0
@@ -710,7 +700,6 @@ func _wall_up(delta: float) -> void:
 		var anim := LIB.get_animation("flip_back")
 		var air: float = velocity.y / _gravity * (1.0 + 1.0 / sqrt(fall_gravity_scale))
 		_play("flip_back", 0.1, clamp(anim.length / air, 0.8, 1.8), true)
-		_sfx.play("whoosh")
 		return
 	# reached the top: grab it (and pull up while W is held)
 	if _try_climb(HANG_HANDS + 0.3, 0.0):

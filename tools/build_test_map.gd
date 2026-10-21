@@ -8,6 +8,7 @@ const OUT := "res://scenes/test_map.tscn"
 const GRID := preload("res://shaders/grid.gdshader")
 const NINJA := preload("res://scenes/ninja.tscn")
 const HUD := preload("res://scripts/debug/debug_hud.gd")
+const MENU := preload("res://scripts/ui/game_menu.gd")
 
 const GREY := Color(0.52, 0.53, 0.55)
 const WALL := Color(0.62, 0.62, 0.6)
@@ -42,6 +43,10 @@ func _init() -> void:
 	hud.name = "DebugHud"
 	hud.set_script(HUD)
 	_add(_root, hud)
+	var menu := CanvasLayer.new()
+	menu.name = "GameMenu"
+	menu.set_script(MENU)
+	_add(_root, menu)
 	var scene := PackedScene.new()
 	scene.pack(_root)
 	print("saved %s: %s" % [OUT, error_string(ResourceSaver.save(scene, OUT))])
