@@ -2,3 +2,4 @@
 .godot/
 /android/
 *.tmp
+assets/animations/source/n_run_to_rolling_*.png*

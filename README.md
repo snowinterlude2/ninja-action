@@ -9,9 +9,15 @@ you start on the yellow pad in the middle of the greybox test map.
 |---|---|
 | Move / look | W A S D / mouse |
 | Sprint / walk | hold Shift / hold Alt |
-| Jump, vault, wall flip | Space (does what fits: vault in front of a low obstacle, run up a tall wall, else jump) |
-| Wall run | sprint and jump along a wall; Space during it kicks off to the other side |
-| Roll / slide | C or Ctrl (slide when sprinting); press it just before landing to roll out of a big fall |
+| Jump, vault, climb, wall flip | Space (does what fits: vault a low thin obstacle, climb onto a ledge up to 3.1 m, run up and flip off a taller wall, else jump; in the air, Space grabs a ledge in front of you) |
+| Flip | double-tap Space: front flip (one of three at random); hold S and double-tap for a backflip |
+| Wall run | sprint and jump along a wall; Space during it kicks off away from the wall |
+| Camera | mouse looks; V switches between the wide camera and over the shoulder |
+| Run backwards | S on its own: he backs up still facing the camera |
+| Run up a wall | sprint (Shift) straight into a tall wall: two fast steps up it, then he drops unless you press Space (or S + Space) to backflip off; grabs the top if he reaches it (W pulls up) |
+| Hang | jump into a ledge (or Space at one over 1.7 m) to grab it; W or Space climbs up, S or C lets go, A / D shimmy along |
+| Roll | C or Ctrl rolls forward (he stays low while there's a bar over him); falls over 4 m roll on their own |
+| Get up | after a fall too high (over 9.5 m without a roll) he ragdolls; W gets him back up |
 | Test helpers | 1-6 teleport to stations, R back to spawn, T slow motion, F1 hide the help panel, Esc free the mouse |
 
 All keys are actions in Project Settings > Input Map, so they can be rebound.
@@ -45,5 +51,7 @@ Run from the project folder (`godot` is the Godot 4.7 binary):
 | `godot --headless --fixed-fps 60 --script res://tools/test_moves.gd` | Plays the map with scripted keys and checks each move (run, vault, climb over, wall run and kick, landings, slide, wall flip). |
 | `godot --headless --script res://tools/test_mirror.gd` | Checks the mirror: the flipped left strafe must match the real right strafe. |
 | `godot --headless --script res://tools/inspect_clips.gd` | Lists every source clip's length and how far its hips travel. |
+| `godot --headless --script res://tools/pose_probe.gd -- <clip>` | Prints where a source clip's hands and feet are through the move (which side a wall move is for, whether it flips). |
+| `xvfb-run godot --rendering-driver opengl3 --script res://tools/filmstrip.gd -- <dir> <clip>` | Saves a side and back filmstrip of a baked clip. |
 | `godot --headless --script res://tools/setup_input.gd` | Resets the input map to the defaults above. |
 | `xvfb-run godot --rendering-driver opengl3 --script res://tools/screenshots.gd -- <dir>` | Saves posed screenshots around the map. |
