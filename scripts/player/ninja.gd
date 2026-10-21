@@ -7,7 +7,7 @@ extends CharacterBody3D
 
 signal state_changed(state: String)
 
-enum State { GROUND, AIR, WALL_RUN, ACTION }
+enum State { GROUND, AIR, WALL_RUN, ACTION, HANG }
 
 const LIB := preload("res://assets/animations/ninja_locomotion.res")
 const LIB_NAME := "ninja"
@@ -54,6 +54,8 @@ const WORLD_MASK := 1
 @export var climb_run_max := 4.0
 ## How high up the wall his feet get before a wall flip (meters).
 @export var wall_flip_height := 1.8
+## Sideways speed hanging from a ledge (meters per second).
+@export var shimmy_speed := 0.6
 @export_group("Wall run")
 @export var wall_run_min_speed := 3.5
 @export var wall_run_speed := 7.0
@@ -87,6 +89,8 @@ var _wall_timer := 0.0
 var _wall_cooldown := 0.0
 var _last_wall_normal := Vector3.ZERO
 var _left_wall_at := -10.0
+## The ledge he hangs from in HANG: its top height and the wall's outward normal.
+var _hang := {}
 ## The one-shot move playing in ACTION: its clip, how its root motion is stretched, and how it ends.
 var _action := {}
 var _stand_height := 1.8
@@ -124,6 +128,8 @@ func _physics_process(delta: float) -> void:
 			_wall_run(delta)
 		State.ACTION:
 			_action_step(delta)
+		State.HANG:
+			_hang_step(delta)
 	var was_on_floor := is_on_floor()
 	move_and_slide()
 	if state == State.AIR and is_on_floor():
@@ -302,8 +308,8 @@ func _try_vault() -> bool:
 	# keep the run's momentum: he carries on at most of the speed he came in at, well past the obstacle, at a
 	# steady pace, and goes straight back into the run when he lands
 	var speed: float = max(Vector2(velocity.x, velocity.z).length(), run_speed)
-	var play := 1.5
-	var past: float = max(near + depth + 1.0, 0.8 * speed * landed / play)
+	var play := 1.6
+	var past: float = max(near + depth + 1.0, speed * landed / play)
 	# high enough to clear the top from just before its near edge until just after its far edge
 	var over_from: float = max(0.05, landed * (near - 0.2) / past)
 	var over_to: float = max(over_from + 0.05, landed * (near + depth + 0.2) / past)
@@ -324,14 +330,14 @@ func _try_vault() -> bool:
 ## ones (up to `reach` above the feet) he jumps to, hangs from, then climbs.
 func _try_climb(reach: float, low := -1.0) -> bool:
 	var fwd := -global_basis.z
-	var look := 1.3 if is_on_floor() else 0.7
+	var look := 1.3 if is_on_floor() else 0.9
 	var hit := _ray(global_position + Vector3.UP * 0.6, fwd * look)
 	if hit.is_empty():
 		hit = _ray(global_position + Vector3.UP * 1.4, fwd * look)
 	if hit.is_empty() or abs(hit.normal.y) > 0.3 or _no_parkour(hit.collider):
 		return false
 	var into := -Vector3(hit.normal.x, 0.0, hit.normal.z).normalized()
-	if fwd.dot(into) < 0.6:
+	if fwd.dot(into) < 0.4:
 		return false
 	var top := _ray(Vector3(hit.position.x, global_position.y + reach + 0.3, hit.position.z) + into * 0.3, Vector3.DOWN * (reach + 0.3))
 	if top.is_empty() or top.normal.y < 0.7:
@@ -365,21 +371,96 @@ func _try_climb(reach: float, low := -1.0) -> bool:
 			"speed": 1.35,
 		})
 		return true
-	var hang_y: float = height - 2.0
-	_start_action("climb_jump", {
-		"keys_f": [[0.0, 0.0], [0.45, against], [1.5, against]],
-		"keys_y": [[0.0, 0.0], [0.45, hang_y], [1.5, hang_y]],
-		"pass_through": true,
-		"speed": 1.3,
-		"then": ["climb_up", {
-			"keys_f": [[0.0, against], [2.0, against], [up.length, onto]],
-			"keys_y": [[0.0, hang_y], [1.0, height - up_rise + _clip_root(up, 1.0).y], [up.length, height]],
+	# higher ledges: grab it and hang (from the ground he jumps up to it first); then W climbs, S drops, A/D shimmy
+	var hang_y: float = height - HANG_HANDS
+	var hang_f: float = wall - HANG_GAP
+	var info := {"top": top.position.y, "normal": hit.normal}
+	if is_on_floor():
+		_start_action("climb_jump", {
+			"keys_f": [[0.0, 0.0], [0.45, hang_f], [1.5, hang_f]],
+			"keys_y": [[0.0, 0.0], [0.45, hang_y], [1.5, hang_y]],
 			"pass_through": true,
-			"cancel_at": 0.85,
-			"speed": 1.35,
-		}],
-	})
+			"speed": 1.3,
+			"end_at": 1.1,
+			"hang": info,
+		})
+	else:
+		_start_action("hang", {
+			"keys_f": [[0.0, 0.0], [0.2, hang_f]],
+			"keys_y": [[0.0, 0.0], [0.2, hang_y]],
+			"pass_through": true,
+			"end_at": 0.2,
+			"blend": 0.1,
+			"hang": info,
+		})
 	return true
+
+
+# --- hanging from a ledge ---
+
+## How far the hands are above the body's origin in the hang clips, and how far the body hangs off the wall.
+const HANG_HANDS := 2.3
+const HANG_GAP := 0.25
+
+
+func _enter_hang(info: Dictionary) -> void:
+	_hang = info
+	collision_mask = 0
+	velocity = Vector3.ZERO
+	_set_state(State.HANG)
+	_play("hang", 0.2)
+	_anim.speed_scale = 1.0
+
+
+func _hang_step(delta: float) -> void:
+	velocity = Vector3.ZERO
+	var n: Vector3 = _hang.normal
+	var inp := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	if _buffer > 0.0 or inp.y < -0.5:
+		_buffer = 0.0
+		_climb_from_hang()
+		return
+	if Input.is_action_just_pressed("crouch") or inp.y > 0.5:
+		# let go and drop, pushed a little off the wall
+		collision_mask = WORLD_MASK
+		_hang = {}
+		velocity = n * 1.5
+		_peak_y = global_position.y
+		_set_state(State.AIR)
+		_play("fall", 0.3)
+		return
+	if abs(inp.x) > 0.3:
+		var side: Vector3 = global_basis.x * signf(inp.x)
+		var next: Vector3 = global_position + side * shimmy_speed * delta
+		# only along as far as the ledge goes: there must still be wall in front and a top at the same height
+		var wall := _ray(next + Vector3.UP * (HANG_HANDS - 0.4), -n * 0.8)
+		var top := _ray(Vector3(next.x, _hang.top + 0.3, next.z) - n * (HANG_GAP + 0.3), Vector3.DOWN * 0.6)
+		if not wall.is_empty() and not top.is_empty() and abs(top.position.y - _hang.top) < 0.2:
+			global_position = next
+			_play("shimmy_r" if inp.x > 0.0 else "shimmy_l", 0.15)
+			_anim.speed_scale = 2.0
+			return
+	_play("hang", 0.25)
+	_anim.speed_scale = 1.0
+
+
+func _climb_from_hang() -> void:
+	var up := LIB.get_animation("climb_up")
+	var rise: float = _hang.top - global_position.y
+	# room to stand up there, else stay hanging
+	if not _ray(Vector3(global_position.x, _hang.top + 0.05, global_position.z) - _hang.normal * (HANG_GAP + 0.5), Vector3.UP * 1.8).is_empty():
+		return
+	var end_y: float = _clip_root(up, up.length).y
+	_hang = {}
+	_start_action("climb_up", {
+		# the pull-up clip starts with bent arms, higher than the hang: ease up to it, then follow the clip
+		"keys_f": [[0.0, 0.0], [2.0, 0.0], [up.length, HANG_GAP + 0.6]],
+		"keys_y": [[0.0, 0.0], [1.0, rise - (end_y - _clip_root(up, 1.0).y)], [up.length, rise]],
+		"pass_through": true,
+		"cancel_at": 0.85,
+		"speed": 1.4,
+		"blend": 0.25,
+	})
 
 
 ## Where a clip's root motion has the body at `time`: x to its left, y up, z forward (meters).
@@ -571,7 +652,11 @@ func _action_step(delta: float) -> void:
 	var cancel: bool = u >= _action.get("cancel_at", 1.0) and (move_input().length() > 0.1 or _buffer > 0.0)
 	if _action.has("end_at") and pos >= _action.end_at:
 		u = 1.0
-	if u >= 1.0 and _action.has("then"):
+	if u >= 1.0 and _action.has("hang"):
+		var info: Dictionary = _action.hang
+		_end_action(true)
+		_enter_hang(info)
+	elif u >= 1.0 and _action.has("then"):
 		# chain into the next move from where this one left the body
 		var next: Array = _action.then
 		var keep_origin: Vector3 = _action.origin
@@ -681,6 +766,8 @@ func state_name() -> String:
 func teleport(to: Transform3D) -> void:
 	if not _action.is_empty():
 		_end_action()
+	_hang = {}
+	collision_mask = WORLD_MASK
 	global_transform = to
 	velocity = Vector3.ZERO
 	_peak_y = to.origin.y

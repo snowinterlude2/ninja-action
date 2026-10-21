@@ -71,6 +71,8 @@ const CLIPS := {
 	"climb_jump": ["jump_to_hang", AIR, false, [0.0, 1.5]],
 	"climb_up": ["climbing_to_top", ROOT_Y, false],
 	"hang": ["hanging_idle", INPLACE, true],
+	"shimmy_l": ["left_shimmy", INPLACE, true],
+	"shimmy_r": ["right_shimmy", INPLACE, true],
 	"wall_jump": ["jump_from_wall", ROOT_Y, false],
 	"wall_flip": ["run_wall_flip", ROOT_Y, false],
 }

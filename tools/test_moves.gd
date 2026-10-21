@@ -36,8 +36,8 @@ func _run() -> void:
 	await _test_vault("vault (1.0 m, 0.8 deep)", Vector3(-14, 0.1, -17.5), -20.0, "vault", -20.9)
 	await _test_vault("climb over (1.5 m)", Vector3(-14, 0.1, -22.5), -25.0, "vault_high", -25.4)
 	await _test_climb("climb onto the deep 1.1 m box", Vector3(-14, 0.1, -27.0), 0.0, 1.4, 1.1, ["climb_up"])
-	await _test_climb("jump, hang and climb the 3 m pillar", Vector3(18, 0.1, 13.5), PI, 2.0, 3.0, ["climb_jump", "climb_up"])
-	await _test_climb("grab the 3 m pillar's edge mid-jump", Vector3(18, 0.1, 13.0), PI, 1.6, 3.0, ["jump_run", "climb_up"])
+	await _test_climb("jump, hang and climb the 3 m pillar", Vector3(18, 0.1, 13.5), PI, 2.0, 3.0, ["climb_jump", "hang", "climb_up"])
+	await _test_climb("grab the 3 m pillar's edge mid-jump", Vector3(18, 0.1, 13.0), PI, 1.6, 3.0, ["jump_run", "hang", "climb_up"])
 	await _test_wall_run()
 	await _test_drop("6 m drop, no roll", "Station4", false, "land_hard")
 	await _test_drop("6 m drop, roll", "Station4", true, "land_roll")
@@ -104,7 +104,8 @@ func _test_climb(label: String, start: Vector3, yaw: float, press_after: float, 
 			pressed = true
 		elif pressed:
 			Input.action_release("jump")
-			if ninja.state == Ninja.State.ACTION:
+			# keep holding W: from a hang that's what climbs up
+			if ninja.state == Ninja.State.ACTION and ninja.current_clip == "climb_up" and _seen.has("hang") == false:
 				Input.action_release("move_forward")
 		if pressed and ninja.state == Ninja.State.GROUND and _seen.has(clips[-1]):
 			break

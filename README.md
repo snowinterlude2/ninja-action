@@ -11,6 +11,7 @@ you start on the yellow pad in the middle of the greybox test map.
 | Sprint / walk | hold Shift / hold Alt |
 | Jump, vault, climb, wall flip | Space (does what fits: vault a low thin obstacle, climb onto a ledge up to 3.1 m, run up and flip off a taller wall, else jump; in the air, Space grabs a ledge in front of you) |
 | Wall run | sprint and jump along a wall; Space during it kicks off away from the wall |
+| Hang | jump into a ledge (or Space at one over 1.7 m) to grab it; W or Space climbs up, S or C lets go, A / D shimmy along |
 | Roll / slide | C or Ctrl (slide when sprinting); press it just before landing to roll out of a big fall |
 | Test helpers | 1-6 teleport to stations, R back to spawn, T slow motion, F1 hide the help panel, Esc free the mouse |
 
