@@ -62,8 +62,9 @@ func play(kind: String, db := 0.0) -> void:
 
 
 ## Pain cries, one at a time (a new one cuts the last).
-func voice(kind: String, db := 0.0) -> void:
-	_start(_voice, kind, db - 2.0)
+## Voice lines are switched off (snow asked for none).
+func voice(_kind: String, _db := 0.0) -> void:
+	pass
 
 
 func _start(p: AudioStreamPlayer3D, kind: String, db: float) -> void:
