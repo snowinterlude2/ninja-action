@@ -50,6 +50,10 @@ const WORLD_MASK := 1
 @export var climb_low_max := 1.7
 ## Highest ledge he can grab while already in the air (above the feet).
 @export var climb_air_max := 2.3
+## Highest ledge he grabs by running up the wall at it (a run at a wall taller than this flips off it instead).
+@export var climb_run_max := 4.0
+## How high up the wall his feet get before a wall flip (meters).
+@export var wall_flip_height := 1.8
 @export_group("Wall run")
 @export var wall_run_min_speed := 3.5
 @export var wall_run_speed := 7.0
@@ -165,7 +169,8 @@ func _ground(delta: float) -> void:
 
 	if _buffer > 0.0:
 		_buffer = 0.0
-		if _try_vault() or _try_climb(climb_max) or _try_wall_climb():
+		var running := Vector2(velocity.x, velocity.z).length() > run_speed * 0.6
+		if _try_vault() or _try_climb(climb_run_max if running else climb_max) or _try_wall_climb():
 			return
 		_jump()
 		return
@@ -291,20 +296,22 @@ func _try_vault() -> bool:
 	var near: float = into.dot(Vector3(hit.position.x, 0.0, hit.position.z) - start)
 	var clip := "vault" if height <= vault_max else "vault_high"
 	var anim := LIB.get_animation(clip)
-	# the clip: crouched on top with a hand down (until `on_top`), then the legs swing over and he drops down
-	# the far side (landed at `landed`). Warp it so he hops up onto the near edge, swings over and lands past it.
-	var on_top := 0.35 if clip == "vault" else 0.5
+	# the clip: a hand down on the top, the legs swing over and he drops down the far side (landed at `landed`).
+	# Warp it so he rises over the obstacle, swings across and lands well past it.
 	var landed := 1.1 if clip == "vault" else 1.25
-	var past: float = near + depth + 0.6
-	# keep the run's momentum: play the clip fast enough that he covers the vault at the speed he came in at,
-	# moving forward at a steady pace, and hand back to the run the moment he lands
+	# keep the run's momentum: he carries on at most of the speed he came in at, well past the obstacle, at a
+	# steady pace, and goes straight back into the run when he lands
 	var speed: float = max(Vector2(velocity.x, velocity.z).length(), run_speed)
-	var play: float = clamp(landed * speed / past, 1.2, 3.2)
+	var play := 1.5
+	var past: float = max(near + depth + 1.0, 0.8 * speed * landed / play)
+	# high enough to clear the top from just before its near edge until just after its far edge
+	var over_from: float = max(0.05, landed * (near - 0.2) / past)
+	var over_to: float = max(over_from + 0.05, landed * (near + depth + 0.2) / past)
 	rotation.y = atan2(-into.x, -into.z)
 	_start_action(clip, {
 		"keys_f": [[0.0, 0.0], [landed, past]],
 		"linear_f": true,
-		"keys_y": [[0.0, 0.0], [on_top, height + 0.05], [landed, 0.0]],
+		"keys_y": [[0.0, 0.0], [over_from, height + 0.1], [over_to, height + 0.05], [landed, 0.0]],
 		"end_at": landed + 0.1,
 		"pass_through": true,
 		"keep_speed": true,
@@ -461,7 +468,8 @@ func _try_wall_climb() -> bool:
 	# it has to be too tall to vault
 	if _ray(global_position + Vector3.UP * (climb_over_max + 0.2), fwd * 1.2).is_empty():
 		return false
-	rotation.y = atan2(hit.normal.x, hit.normal.z) + PI
+	# face the wall (this used to add PI, which turned him round to face away from it before the flip)
+	rotation.y = atan2(hit.normal.x, hit.normal.z)
 	# the clip runs 1.8 m up to the wall, kicks off it at 0.56 s and flips 1.5 m back: stretch the run-in so his
 	# feet plant on this wall, wherever he pressed jump
 	var start := Vector3(global_position.x, 0.0, global_position.z)
@@ -472,6 +480,8 @@ func _try_wall_climb() -> bool:
 	_start_action("wall_flip", {
 		"root_y": true,
 		"keys_f": [[0.0, 0.0], [plant, wall - 0.3], [anim.length, wall - 0.3 + back]],
+		# run two steps up the wall before flipping off it, not one hop
+		"keys_y": [[0.0, 0.0], [0.84, wall_flip_height], [1.4, 0.0], [anim.length, 0.0]],
 		"cancel_at": 0.8,
 		"then_air": true,
 	})
