@@ -215,8 +215,8 @@ func _air(delta: float) -> void:
 		_buffer = 0.0
 		_jump()
 		return
-	var scale := fall_gravity_scale if velocity.y < 0.0 else 1.0
-	velocity.y -= _gravity * scale * delta
+	var g_scale := fall_gravity_scale if velocity.y < 0.0 else 1.0
+	velocity.y -= _gravity * g_scale * delta
 	_peak_y = max(_peak_y, global_position.y)
 	var input := move_input()
 	if input.length() > 0.05:
@@ -228,6 +228,9 @@ func _air(delta: float) -> void:
 		_face(input, delta, turn_speed * 0.3)
 	if _buffer > 0.0 and _try_climb(climb_air_max):
 		_buffer = 0.0
+		return
+	# grab a ledge he's moving into without pressing anything, once it's above the knees
+	if velocity.y < 3.0 and move_input().length() > 0.3 and _try_climb(climb_air_max, 0.9):
 		return
 	var kicking := current_clip.begins_with("wall_kick") and _anim.is_playing()
 	if kicking:
@@ -292,27 +295,32 @@ func _try_vault() -> bool:
 	# the far side (landed at `landed`). Warp it so he hops up onto the near edge, swings over and lands past it.
 	var on_top := 0.35 if clip == "vault" else 0.5
 	var landed := 1.1 if clip == "vault" else 1.25
-	var past: float = near + depth + 0.5
-	var end_f: float = past + _clip_root(anim, anim.length).z - _clip_root(anim, landed).z
+	var past: float = near + depth + 0.6
+	# keep the run's momentum: play the clip fast enough that he covers the vault at the speed he came in at,
+	# moving forward at a steady pace, and hand back to the run the moment he lands
+	var speed: float = max(Vector2(velocity.x, velocity.z).length(), run_speed)
+	var play: float = clamp(landed * speed / past, 1.2, 3.2)
 	rotation.y = atan2(-into.x, -into.z)
 	_start_action(clip, {
-		"keys_f": [[0.0, 0.0], [on_top, near + 0.2], [landed, past], [anim.length, end_f]],
-		"keys_y": [[0.0, 0.0], [on_top, height], [landed, 0.0], [anim.length, 0.0]],
+		"keys_f": [[0.0, 0.0], [landed, past]],
+		"linear_f": true,
+		"keys_y": [[0.0, 0.0], [on_top, height + 0.05], [landed, 0.0]],
+		"end_at": landed + 0.1,
 		"pass_through": true,
-		"cancel_at": 0.75,
 		"keep_speed": true,
-		"speed": 1.25,
+		"speed": play,
 	})
 	return true
 
 
 ## Space facing a ledge too tall or too deep to vault: climb onto it. Low ledges he pulls straight up onto; higher
 ## ones (up to `reach` above the feet) he jumps to, hangs from, then climbs.
-func _try_climb(reach: float) -> bool:
+func _try_climb(reach: float, low := -1.0) -> bool:
 	var fwd := -global_basis.z
-	var hit := _ray(global_position + Vector3.UP * 0.6, fwd * 1.0)
+	var look := 1.3 if is_on_floor() else 0.7
+	var hit := _ray(global_position + Vector3.UP * 0.6, fwd * look)
 	if hit.is_empty():
-		hit = _ray(global_position + Vector3.UP * 1.4, fwd * 1.0)
+		hit = _ray(global_position + Vector3.UP * 1.4, fwd * look)
 	if hit.is_empty() or abs(hit.normal.y) > 0.3 or _no_parkour(hit.collider):
 		return false
 	var into := -Vector3(hit.normal.x, 0.0, hit.normal.z).normalized()
@@ -322,7 +330,7 @@ func _try_climb(reach: float) -> bool:
 	if top.is_empty() or top.normal.y < 0.7:
 		return false
 	var height: float = top.position.y - global_position.y
-	if height < vault_min or height > reach or top.position.y < hit.position.y:
+	if height < max(vault_min, low) or height > reach or top.position.y < hit.position.y:
 		return false
 	# room to stand on top
 	if not _ray(top.position + Vector3.UP * 0.05, Vector3.UP * 1.8).is_empty():
@@ -454,7 +462,19 @@ func _try_wall_climb() -> bool:
 	if _ray(global_position + Vector3.UP * (climb_over_max + 0.2), fwd * 1.2).is_empty():
 		return false
 	rotation.y = atan2(hit.normal.x, hit.normal.z) + PI
-	_start_action("wall_flip", {"root_y": true, "cancel_at": 0.85, "then_air": true})
+	# the clip runs 1.8 m up to the wall, kicks off it at 0.56 s and flips 1.5 m back: stretch the run-in so his
+	# feet plant on this wall, wherever he pressed jump
+	var start := Vector3(global_position.x, 0.0, global_position.z)
+	var wall: float = (-hit.normal).dot(Vector3(hit.position.x, 0.0, hit.position.z) - start)
+	var anim := LIB.get_animation("wall_flip")
+	var plant := 0.56
+	var back: float = _clip_root(anim, anim.length).z - _clip_root(anim, plant).z
+	_start_action("wall_flip", {
+		"root_y": true,
+		"keys_f": [[0.0, 0.0], [plant, wall - 0.3], [anim.length, wall - 0.3 + back]],
+		"cancel_at": 0.8,
+		"then_air": true,
+	})
 	return true
 
 
@@ -519,7 +539,7 @@ func _action_step(delta: float) -> void:
 			var p0: Vector3 = anim.position_track_interpolate(_action.track, _action.from)
 			p.x -= p0.x * _action.xz_scale
 		if _action.has("keys_f"):
-			p.z = _keyed(anim, _action.track, pos, _action.keys_f, 2)
+			p.z = _keyed(anim, -1 if _action.get("linear_f", false) else _action.track, pos, _action.keys_f, 2, _action.get("linear_f", false))
 		if _action.has("keys_y"):
 			p.y = _keyed(anim, _action.track, pos, _action.keys_y, 1)
 		var target: Vector3 = _action.origin + _action.basis * Vector3(p.x, 0.0, p.z)
@@ -539,6 +559,8 @@ func _action_step(delta: float) -> void:
 		velocity.z = move_toward(velocity.z, 0.0, ground_decel * delta)
 		velocity.y -= _gravity * delta
 	var cancel: bool = u >= _action.get("cancel_at", 1.0) and (move_input().length() > 0.1 or _buffer > 0.0)
+	if _action.has("end_at") and pos >= _action.end_at:
+		u = 1.0
 	if u >= 1.0 and _action.has("then"):
 		# chain into the next move from where this one left the body
 		var next: Array = _action.then
@@ -555,7 +577,7 @@ func _action_step(delta: float) -> void:
 ## Root motion along one axis (1 = up, 2 = forward) pinned to key values: `keys` is [[clip time, meters], ...].
 ## Between two keys the body follows the clip's own curve on that axis, stretched to go from one key's value to
 ## the next; where the clip barely moves on it, it eases across instead.
-func _keyed(anim: Animation, track: int, time: float, keys: Array, axis: int) -> float:
+func _keyed(anim: Animation, track: int, time: float, keys: Array, axis: int, linear := false) -> float:
 	if time <= keys[0][0]:
 		return keys[0][1]
 	for i in keys.size() - 1:
@@ -568,6 +590,8 @@ func _keyed(anim: Animation, track: int, time: float, keys: Array, axis: int) ->
 		var w: float
 		if track != -1 and abs(c1 - c0) > 0.1:
 			w = clamp((anim.position_track_interpolate(track, time)[axis] - c0) / (c1 - c0), 0.0, 1.0)
+		elif linear:
+			w = inverse_lerp(k0[0], k1[0], time)
 		else:
 			w = smoothstep(k0[0], k1[0], time)
 		return lerp(float(k0[1]), float(k1[1]), w)
@@ -586,14 +610,21 @@ func _end_action(chained := false) -> void:
 	if _action.get("keep_speed", false):
 		var speed := sprint_speed if Input.is_action_pressed("sprint") else run_speed
 		velocity = fwd * speed * clamp(move_input().length() + 0.3, 0.0, 1.0)
+		# land running: carry straight on into the run clip
+		if move_input().length() > 0.1:
+			_play("sprint" if speed > run_speed else "run", 0.15)
 	elif _action.track != -1:
 		# keep a little of the move's momentum
 		velocity.x *= 0.5
 		velocity.z *= 0.5
 	velocity.y = min(velocity.y, 0.0)
 	var then_air: bool = _action.get("then_air", false)
+	# a vault puts him back down exactly where he started, so he's on the ground even before the next slide
+	var landed: bool = _action.has("keys_y") and _action.keys_y[-1][1] == 0.0
 	_action = {}
-	if then_air or not is_on_floor():
+	if landed:
+		velocity.y = -2.0
+	if then_air or not (is_on_floor() or landed):
 		_peak_y = global_position.y
 		_set_state(State.AIR)
 	else:

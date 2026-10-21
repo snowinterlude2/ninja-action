@@ -20,6 +20,8 @@ extends Node3D
 
 func _ready() -> void:
 	top_level = true
+	# the rig follows the ninja's interpolated position itself every frame, so it opts out of physics interpolation
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	if _target is CollisionObject3D:
 		_arm.add_excluded_object((_target as CollisionObject3D).get_rid())
 	global_position = _target.global_position + Vector3.UP * follow_height
