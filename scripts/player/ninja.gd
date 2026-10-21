@@ -7,7 +7,7 @@ extends CharacterBody3D
 
 signal state_changed(state: String)
 
-enum State { GROUND, AIR, WALL_RUN, ACTION, HANG }
+enum State { GROUND, AIR, WALL_RUN, ACTION, HANG, WALL_UP, RAGDOLL }
 
 const LIB := preload("res://assets/animations/ninja_locomotion.res")
 const LIB_NAME := "ninja"
@@ -36,6 +36,12 @@ const WORLD_MASK := 1
 ## Falls shorter than this (meters) just land. Longer ones need a roll, or you take a hard landing.
 @export var safe_drop := 4.0
 @export var hard_drop := 7.0
+## Falls this long (meters) without a roll knock him down (ragdoll); this long even a roll can't save him.
+@export var ragdoll_drop := 9.5
+@export var ragdoll_drop_rolled := 18.0
+## Second jump press within this long (seconds) of the jump: flip (forward, or a backflip holding back).
+@export var flip_window := 0.6
+@export var flip_up := 5.0
 @export_group("Vault")
 @export var vault_reach := 1.4
 @export var vault_min := 0.35
@@ -71,6 +77,16 @@ const WORLD_MASK := 1
 @export var wall_run_clip_right := "wall_run_mirror"
 @export var wall_kick_clip_left := "wall_kick"
 @export var wall_kick_clip_right := "wall_kick_mirror"
+## How far his body stays off the wall while wall running (meters, body center to wall), so he doesn't sink in.
+@export var wall_run_gap := 0.55
+@export_group("Wall run up")
+## Sprinting (Shift) into a tall wall runs straight up it, as long as Shift is held, up to this long (seconds).
+@export var wall_up_time := 4.0
+@export var wall_up_speed := 3.0
+@export var wall_up_gap := 0.42
+## Space (or back + Space) while running up a wall backflips off it: this hard away and this hard up.
+@export var wall_backflip_push := 4.5
+@export var wall_backflip_up := 5.5
 
 var state := State.GROUND
 ## Where the last fall started and how far it went, for the debug HUD.
@@ -94,6 +110,16 @@ var _hang := {}
 ## The one-shot move playing in ACTION: its clip, how its root motion is stretched, and how it ends.
 var _action := {}
 var _stand_height := 1.8
+var _jumped_at := -10.0
+var _flipped := false
+var _wall_up_timer := 0.0
+var _last_vault := ""
+## Velocity going into this frame's move, so a landing knows how hard it hit.
+var _impact := Vector3.ZERO
+var _ragdoll: PhysicalBoneSimulator3D
+var _ragdoll_at := 0.0
+var _skeleton: Skeleton3D
+var _sfx: NinjaSfx
 
 @onready var _model: Node3D = $Model
 @onready var _anim: AnimationPlayer = $Model/AnimationPlayer
@@ -108,6 +134,9 @@ func _ready() -> void:
 	_stand_height = (_shape.shape as CapsuleShape3D).height
 	# own capsule shape per instance, so crouching one ninja doesn't shrink another
 	_shape.shape = _shape.shape.duplicate()
+	_skeleton = _model.find_children("*", "Skeleton3D", true, false)[0]
+	_sfx = NinjaSfx.new()
+	add_child(_sfx)
 	_play("idle")
 
 
@@ -130,6 +159,12 @@ func _physics_process(delta: float) -> void:
 			_action_step(delta)
 		State.HANG:
 			_hang_step(delta)
+		State.WALL_UP:
+			_wall_up(delta)
+		State.RAGDOLL:
+			_ragdoll_step(delta)
+	_sfx.footsteps(self)
+	_impact = velocity
 	var was_on_floor := is_on_floor()
 	move_and_slide()
 	if state == State.AIR and is_on_floor():
@@ -180,15 +215,33 @@ func _ground(delta: float) -> void:
 			return
 		_jump()
 		return
+	if _try_wall_up():
+		return
 	if _t - _crouch_at < 0.05:
 		_crouch_at = -10.0
 		var speed := flat.length()
 		if speed > (run_speed + sprint_speed) * 0.5:
 			_start_action("slide", {"xz_scale": clamp(speed / 4.5, 0.8, 1.5), "low": true, "cancel_at": 0.8, "keep_speed": true})
+			_sfx.play("whoosh", -6.0)
 		else:
-			_start_action("roll", {"xz_scale": clamp(max(speed, run_speed) / 4.4, 0.8, 1.3), "low": true, "cancel_at": 0.88, "keep_speed": true})
+			_roll(max(speed, run_speed))
 		return
 	_locomotion_anim(flat.length())
+
+
+## A roll out of a run: one of the roll clips at random, carrying him on at most of his speed.
+func _roll(speed: float) -> void:
+	var clip: String = ["roll", "roll_b"].pick_random()
+	var anim := LIB.get_animation(clip)
+	var play := 1.25
+	_start_action(clip, {
+		"warp_distance": speed * 0.6 * anim.length / play,
+		"speed": play,
+		"low": true,
+		"cancel_at": 0.72 if clip == "roll" else 0.8,
+		"keep_speed": true,
+	})
+	_sfx.play("whoosh", -4.0)
 
 
 func _locomotion_anim(speed: float) -> void:
@@ -216,8 +269,16 @@ func _jump() -> void:
 	velocity.y = sqrt(2.0 * _gravity * jump_height)
 	_coyote = 0.0
 	_peak_y = global_position.y
+	_jumped_at = _t
+	_flipped = false
 	_set_state(State.AIR)
-	_play("jump_run" if speed > run_speed * 0.7 else "jump_up", 0.1)
+	var clip := "jump_up"
+	if speed > run_speed * 0.7:
+		clip = "jump_run" if randf() < 0.6 else "jump_long"
+	_play(clip, 0.1, 1.0, true)
+	_sfx.play("jump", -4.0)
+	if randf() < 0.35:
+		_sfx.voice("grunt")
 
 
 func _air(delta: float) -> void:
@@ -230,16 +291,22 @@ func _air(delta: float) -> void:
 	velocity.y -= _gravity * g_scale * delta
 	_peak_y = max(_peak_y, global_position.y)
 	var input := move_input()
+	var flipping := current_clip.begins_with("flip_") and _anim.is_playing()
 	if input.length() > 0.05:
 		var flat := Vector3(velocity.x, 0.0, velocity.z)
 		var top: float = max(flat.length(), run_speed)
 		flat = (flat + input * ground_accel * air_control * delta).limit_length(top)
 		velocity.x = flat.x
 		velocity.z = flat.z
-		_face(input, delta, turn_speed * 0.3)
+		# a flip keeps the way it faces, or a backflip would turn round mid-air
+		if not flipping:
+			_face(input, delta, turn_speed * 0.3)
 	if _buffer > 0.0 and _try_climb(climb_air_max):
 		_buffer = 0.0
 		return
+	if _buffer > 0.0 and not _flipped and _t - _jumped_at < flip_window and _t - _jumped_at > 0.05:
+		_buffer = 0.0
+		_air_flip()
 	# grab a ledge he's moving into without pressing anything, once it's above the knees
 	if velocity.y < 3.0 and move_input().length() > 0.3 and _try_climb(climb_air_max, 0.9):
 		return
@@ -249,25 +316,58 @@ func _air(delta: float) -> void:
 		_face(Vector3(velocity.x, 0.0, velocity.z), delta, 6.0)
 	if _try_wall_run():
 		return
-	if (velocity.y < -1.0 and not kicking) or not _anim.is_playing():
+	if (velocity.y < -1.0 and not kicking and not flipping) or not _anim.is_playing():
 		_play("fall", 0.3)
 		_anim.speed_scale = 1.0
+
+
+## Double-tap jump: a flip at the top of the jump. Forward it's one of the front flips at random; holding back
+## it's a backflip that carries him back the way he came.
+func _air_flip() -> void:
+	_flipped = true
+	var raw := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var fwd := -global_basis.z
+	var flat := Vector3(velocity.x, 0.0, velocity.z)
+	var clip: String
+	if raw.y > 0.5:
+		clip = "flip_back"
+		flat = -fwd * 3.0
+	else:
+		clip = ["flip_front", "flip_run", "flip_aerial"].pick_random()
+		flat = fwd * max(flat.length() + 1.0, run_speed)
+	velocity = Vector3(flat.x, max(velocity.y, flip_up), flat.z)
+	# play it at the speed that has him round before he comes down
+	var air: float = velocity.y / _gravity * (1.0 + 1.0 / sqrt(fall_gravity_scale))
+	var anim := LIB.get_animation(clip)
+	_play(clip, 0.1, clamp(anim.length / air, 0.8, 1.8), true)
+	_sfx.play("whoosh")
+	_sfx.voice("grunt")
 
 
 func _land() -> void:
 	last_drop = _peak_y - global_position.y
 	var speed := Vector2(velocity.x, velocity.z).length()
-	if last_drop >= safe_drop and _t - _crouch_at <= roll_window:
-		_start_action("land_roll", {"xz_scale": clamp(max(speed, 3.0) / 3.0, 0.8, 1.4), "low": true, "cancel_at": 0.8, "keep_speed": true})
+	var rolled := _t - _crouch_at <= roll_window
+	if last_drop >= ragdoll_drop_rolled or (last_drop >= ragdoll_drop and not rolled):
+		_start_ragdoll(_impact)
+	elif last_drop >= safe_drop and rolled:
+		_start_action("land_roll", {"xz_scale": clamp(max(speed, 3.0) / 3.7, 0.8, 1.4), "low": true, "cancel_at": 0.75, "keep_speed": true})
+		_sfx.play("land")
+		_sfx.play("whoosh", -6.0)
 	elif last_drop >= hard_drop:
 		velocity = Vector3.ZERO
 		_start_action("land_hard", {"cancel_at": 0.55})
+		_sfx.play("impact")
+		_sfx.voice("pain")
 	elif last_drop >= safe_drop:
 		velocity.x *= 0.3
 		velocity.z *= 0.3
 		_start_action("land_hard", {"speed": 1.6, "cancel_at": 0.3})
+		_sfx.play("land")
+		_sfx.voice("pain", -4.0)
 	else:
 		_set_state(State.GROUND)
+		_sfx.play("land", -6.0 if last_drop < 1.0 else 0.0)
 
 
 # --- vault ---
@@ -300,15 +400,20 @@ func _try_vault() -> bool:
 		return false
 	var start := Vector3(global_position.x, 0.0, global_position.z)
 	var near: float = into.dot(Vector3(hit.position.x, 0.0, hit.position.z) - start)
-	var clip := "vault" if height <= vault_max else "vault_high"
-	var anim := LIB.get_animation(clip)
-	# the clip: a hand down on the top, the legs swing over and he drops down the far side (landed at `landed`).
-	# Warp it so he rises over the obstacle, swings across and lands well past it.
-	var landed := 1.1 if clip == "vault" else 1.25
+	# a different vault each time for low obstacles: the one-hand side vault (either hand) or the speed vault
+	var clip := "vault_high"
+	if height <= vault_max:
+		var pool := ["vault", "vault_mirror", "vault_speed"]
+		pool.erase(_last_vault)
+		clip = pool.pick_random()
+	_last_vault = clip
+	# each clip: a hand (or two) down on the top, the legs go over and he's down the far side at `landed` (clip
+	# seconds), played at `play`. Warp it so he rises over the obstacle, goes across and lands well past it.
+	var landed: float = {"vault": 1.1, "vault_mirror": 1.1, "vault_high": 1.25, "vault_speed": 1.0}[clip]
+	var play: float = {"vault": 1.6, "vault_mirror": 1.6, "vault_high": 1.6, "vault_speed": 1.15}[clip]
 	# keep the run's momentum: he carries on at most of the speed he came in at, well past the obstacle, at a
 	# steady pace, and goes straight back into the run when he lands
 	var speed: float = max(Vector2(velocity.x, velocity.z).length(), run_speed)
-	var play := 1.6
 	var past: float = max(near + depth + 1.0, speed * landed / play)
 	# high enough to clear the top from just before its near edge until just after its far edge
 	var over_from: float = max(0.05, landed * (near - 0.2) / past)
@@ -323,6 +428,9 @@ func _try_vault() -> bool:
 		"keep_speed": true,
 		"speed": play,
 	})
+	_sfx.play("whoosh", -8.0)
+	if randf() < 0.4:
+		_sfx.voice("grunt", -3.0)
 	return true
 
 
@@ -375,6 +483,7 @@ func _try_climb(reach: float, low := -1.0) -> bool:
 	var hang_y: float = height - HANG_HANDS
 	var hang_f: float = wall - HANG_GAP
 	var info := {"top": top.position.y, "normal": hit.normal}
+	_sfx.voice("grunt", -4.0)
 	if is_on_floor():
 		_start_action("climb_jump", {
 			"keys_f": [[0.0, 0.0], [0.45, hang_f], [1.5, hang_f]],
@@ -514,8 +623,12 @@ func _wall_run(delta: float) -> void:
 		# keep running along the wall's surface as it bends
 		var flat := Vector3(velocity.x, 0.0, velocity.z)
 		var along := (flat - _wall_normal * flat.dot(_wall_normal)).normalized() * flat.length()
-		velocity.x = along.x - _wall_normal.x * 0.5
-		velocity.z = along.z - _wall_normal.z * 0.5
+		# hold the body a set distance off the wall (it used to be pushed into it, which sank the arms and feet
+		# into the wall)
+		var gap: float = (global_position - check.position).dot(_wall_normal)
+		var hold: float = clamp((wall_run_gap - gap) * 10.0, -3.0, 3.0)
+		velocity.x = along.x + _wall_normal.x * hold
+		velocity.z = along.z + _wall_normal.z * hold
 	if _buffer > 0.0:
 		_buffer = 0.0
 		var flat := Vector3(velocity.x, 0.0, velocity.z)
@@ -523,6 +636,8 @@ func _wall_run(delta: float) -> void:
 		velocity.y = wall_jump_up
 		_leave_wall()
 		_play(wall_kick_clip_left if _wall_on_left else wall_kick_clip_right, 0.1, 1.0, true)
+		_sfx.play("whoosh")
+		_sfx.voice("grunt")
 		return
 	if off_wall or _wall_timer > wall_run_time or Input.is_action_just_pressed("crouch") or is_on_floor():
 		velocity += _wall_normal * 1.0
@@ -535,6 +650,74 @@ func _leave_wall() -> void:
 	_wall_cooldown = 0.25
 	_peak_y = global_position.y
 	_set_state(State.AIR)
+
+
+## Sprinting (Shift) straight into a wall too tall to vault: run up it.
+func _try_wall_up() -> bool:
+	if not Input.is_action_pressed("sprint") or move_input().length() < 0.5:
+		return false
+	var flat := Vector3(velocity.x, 0.0, velocity.z)
+	if flat.length() < run_speed * 0.9:
+		return false
+	var fwd := -global_basis.z
+	var hit := _ray(global_position + Vector3.UP * 1.0, fwd * 0.8)
+	if hit.is_empty() or abs(hit.normal.y) > 0.2 or fwd.dot(-hit.normal) < 0.8 or _no_parkour(hit.collider):
+		return false
+	if move_input().normalized().dot(-hit.normal) < 0.7:
+		return false
+	# too tall to vault, or it's a vault
+	if _ray(global_position + Vector3.UP * (climb_over_max + 0.2), fwd * 1.0).is_empty():
+		return false
+	_wall_normal = hit.normal
+	_wall_up_timer = 0.0
+	rotation.y = atan2(hit.normal.x, hit.normal.z)
+	velocity = Vector3(0.0, wall_up_speed, 0.0)
+	_set_state(State.WALL_UP)
+	_play("wall_up_start", 0.1, 1.0, true)
+	_sfx.voice("grunt", -3.0)
+	return true
+
+
+func _wall_up(delta: float) -> void:
+	_wall_up_timer += delta
+	var n := _wall_normal
+	var check := _ray(global_position + Vector3.UP * 1.0, -n * 1.0)
+	if not check.is_empty() and abs(check.normal.y) < 0.2:
+		_wall_normal = check.normal
+		n = _wall_normal
+	# keep close to the wall, facing it, feet on it
+	var gap: float = (global_position - check.position).dot(n) if not check.is_empty() else wall_up_gap
+	var hold: float = clamp((wall_up_gap - gap) * 10.0, -3.0, 3.0)
+	velocity = n * hold
+	# slows down over the last part of the run up
+	velocity.y = wall_up_speed * (1.0 - smoothstep(wall_up_time * 0.75, wall_up_time, _wall_up_timer))
+	rotation.y = lerp_angle(rotation.y, atan2(n.x, n.z), clamp(10.0 * delta, 0.0, 1.0))
+	if current_clip == "wall_up_start" and not _anim.is_playing():
+		_play("wall_up", 0.1)
+	if current_clip == "wall_up":
+		# the loop's feet climb about 2.4 m/s at normal speed
+		_anim.speed_scale = clamp(velocity.y / 2.4, 0.5, 1.6)
+	# Space, or back + Space: backflip off the wall
+	if _buffer > 0.0:
+		_buffer = 0.0
+		velocity = n * wall_backflip_push + Vector3.UP * wall_backflip_up
+		_leave_wall()
+		_flipped = true
+		var anim := LIB.get_animation("flip_back")
+		var air: float = velocity.y / _gravity * (1.0 + 1.0 / sqrt(fall_gravity_scale))
+		_play("flip_back", 0.1, clamp(anim.length / air, 0.8, 1.8), true)
+		_sfx.play("whoosh")
+		_sfx.voice("grunt")
+		return
+	# reached the top: grab it (and pull up while W is held)
+	if _try_climb(HANG_HANDS + 0.3, 0.0):
+		return
+	var out_of_wall: bool = check.is_empty() or abs(check.normal.y) > 0.2
+	if out_of_wall or not Input.is_action_pressed("sprint") or Input.is_action_just_pressed("crouch") \
+			or _wall_up_timer > wall_up_time:
+		velocity = n * 1.5 + Vector3.UP * min(velocity.y, 1.0)
+		_leave_wall()
+		_play("fall", 0.3)
 
 
 ## Space while running at a wall too tall to vault: run up it and flip off (the run wall flip clip).
@@ -652,6 +835,11 @@ func _action_step(delta: float) -> void:
 	var cancel: bool = u >= _action.get("cancel_at", 1.0) and (move_input().length() > 0.1 or _buffer > 0.0)
 	if _action.has("end_at") and pos >= _action.end_at:
 		u = 1.0
+	# still under something low (a slide under a bar): keep sliding on until there's room to stand
+	if _action.get("low", false) and (u >= 1.0 or cancel) and not _ray(global_position + Vector3.UP * 0.5, Vector3.UP * 1.4).is_empty():
+		var on: Vector3 = -global_basis.z * 3.0
+		velocity = Vector3(on.x, -1.0, on.z)
+		return
 	if u >= 1.0 and _action.has("hang"):
 		var info: Dictionary = _action.hang
 		_end_action(true)
@@ -766,6 +954,8 @@ func state_name() -> String:
 func teleport(to: Transform3D) -> void:
 	if not _action.is_empty():
 		_end_action()
+	if _ragdoll != null:
+		_stop_ragdoll()
 	_hang = {}
 	collision_mask = WORLD_MASK
 	global_transform = to
@@ -773,3 +963,115 @@ func teleport(to: Transform3D) -> void:
 	_peak_y = to.origin.y
 	_set_state(State.AIR)
 	reset_physics_interpolation()
+
+
+# --- ragdoll (a fall too high to land) ---
+
+## Bone -> [child bone the capsule reaches to, capsule radius in meters]. Bones left out follow their parent.
+const RAGDOLL_BONES := {
+	"Hips": ["Spine", 0.13],
+	"Spine": ["Spine2", 0.13],
+	"Spine2": ["Neck", 0.14],
+	"Head": ["HeadTop_End", 0.1],
+	"LeftArm": ["LeftForeArm", 0.05],
+	"LeftForeArm": ["LeftHand", 0.045],
+	"RightArm": ["RightForeArm", 0.05],
+	"RightForeArm": ["RightHand", 0.045],
+	"LeftUpLeg": ["LeftLeg", 0.075],
+	"LeftLeg": ["LeftFoot", 0.06],
+	"RightUpLeg": ["RightLeg", 0.075],
+	"RightLeg": ["RightFoot", 0.06],
+}
+const BONE_PREFIX := "mixamorig1_"
+
+
+func _start_ragdoll(impact: Vector3) -> void:
+	if not _action.is_empty():
+		_end_action(true)
+	_set_state(State.RAGDOLL)
+	velocity = Vector3.ZERO
+	_ragdoll_at = _t
+	_anim.active = false
+	_ragdoll = PhysicalBoneSimulator3D.new()
+	_skeleton.add_child(_ragdoll)
+	var scale_to_bone: float = 1.0 / _skeleton.global_basis.get_scale().x
+	for short in RAGDOLL_BONES:
+		var info: Array = RAGDOLL_BONES[short]
+		var bone := _skeleton.find_bone(BONE_PREFIX + short)
+		var child := _skeleton.find_bone(BONE_PREFIX + info[0])
+		if bone == -1 or child == -1:
+			continue
+		var pose := _skeleton.get_bone_global_pose(bone)
+		# the capsule runs from the bone toward its child, in the bone's own space
+		var local_dir: Vector3 = pose.basis.inverse() * (_skeleton.get_bone_global_pose(child).origin - pose.origin)
+		var length := local_dir.length()
+		var pb := PhysicalBone3D.new()
+		pb.name = "PB_" + short
+		pb.bone_name = BONE_PREFIX + short
+		pb.collision_layer = 16
+		pb.collision_mask = WORLD_MASK
+		pb.mass = 6.0 if short.begins_with("Spine") or short == "Hips" else 2.5
+		pb.linear_damp = 0.3
+		pb.angular_damp = 2.0
+		pb.friction = 0.9
+		pb.joint_type = PhysicalBone3D.JOINT_TYPE_CONE
+		pb.set("joint_constraints/swing_span", 40.0)
+		pb.set("joint_constraints/twist_span", 20.0)
+		var up := Vector3.FORWARD if abs(local_dir.normalized().dot(Vector3.UP)) > 0.9 else Vector3.UP
+		pb.body_offset = Transform3D(Basis.looking_at(local_dir.normalized(), up), local_dir * 0.5)
+		pb.joint_offset = Transform3D(Basis(), Vector3(0, 0, length * 0.5))
+		var cs := CollisionShape3D.new()
+		var capsule := CapsuleShape3D.new()
+		var radius: float = info[1] * scale_to_bone
+		capsule.radius = radius
+		capsule.height = max(length, radius * 2.0 + 0.01)
+		cs.shape = capsule
+		cs.rotation.x = PI * 0.5
+		pb.add_child(cs)
+		_ragdoll.add_child(pb)
+	_ragdoll.physical_bones_start_simulation()
+	_sfx.play("impact")
+	_sfx.voice("pain_big")
+	# carry the fall into the bones, a little forward and down
+	await get_tree().physics_frame
+	if _ragdoll == null:
+		return
+	for pb in _ragdoll.get_children():
+		if pb is PhysicalBone3D:
+			(pb as PhysicalBone3D).apply_central_impulse(Vector3(impact.x, max(impact.y, -8.0), impact.z) * pb.mass * 0.3)
+
+
+func _ragdoll_step(_delta: float) -> void:
+	velocity = Vector3.ZERO
+	# W (forward) gets him back up once he's down
+	if _t - _ragdoll_at > 0.8 and Input.get_vector("move_left", "move_right", "move_forward", "move_back").y < -0.5:
+		_get_up()
+
+
+func _get_up() -> void:
+	var hips := _skeleton.find_bone(BONE_PREFIX + "Hips")
+	var head := _skeleton.find_bone(BONE_PREFIX + "Head")
+	var hips_t: Transform3D = _skeleton.global_transform * _skeleton.get_bone_global_pose(hips)
+	var head_p: Vector3 = _skeleton.global_transform * _skeleton.get_bone_global_pose(head).origin
+	# chest facing the sky: on his back, kip up; otherwise roll over and stand
+	var chest: Vector3 = hips_t.basis.z.normalized()
+	var on_back := chest.y > 0.0
+	var head_dir := Vector3(head_p.x - hips_t.origin.x, 0.0, head_p.z - hips_t.origin.z)
+	_stop_ragdoll()
+	# the body moves to where the ragdoll ended up; both get-up clips start with the head behind him
+	var floor_hit := _ray(Vector3(hips_t.origin.x, hips_t.origin.y + 0.5, hips_t.origin.z), Vector3.DOWN * 3.0)
+	var at := Vector3(hips_t.origin.x, floor_hit.position.y if not floor_hit.is_empty() else global_position.y, hips_t.origin.z)
+	global_position = at
+	if head_dir.length() > 0.05:
+		_face(-head_dir, 1.0, 1000.0)
+	reset_physics_interpolation()
+	_start_action("kip_up" if on_back and randf() < 0.5 else "get_up", {"cancel_at": 0.8, "speed": 1.3, "blend": 0.3})
+
+
+func _stop_ragdoll() -> void:
+	if _ragdoll != null:
+		_ragdoll.physical_bones_stop_simulation()
+		_ragdoll.queue_free()
+		_ragdoll = null
+	_skeleton.reset_bone_poses()
+	_anim.active = true

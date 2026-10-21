@@ -13,7 +13,7 @@ func _init() -> void:
 		var scene: Node = load(SRC + clip + ".fbx").instantiate()
 		var ap: AnimationPlayer = scene.find_children("*", "AnimationPlayer", true, false)[0]
 		var sk: Skeleton3D = scene.find_children("*", "Skeleton3D", true, false)[0]
-		var a_name: String = ap.get_animation_list()[0]
+		var a_name: String = "mixamo_com" if ap.has_animation("mixamo_com") else ap.get_animation_list()[0]
 		var a := ap.get_animation(a_name)
 		print("== %s (%.2fs)" % [clip, a.length])
 		for i in 9:

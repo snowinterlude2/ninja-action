@@ -24,7 +24,8 @@ const FPS := 30.0
 ## The hips' height when the ninja stands (meters), from the idle clip.
 const STAND_HIPS := 0.93
 
-## Clip name in the game -> [source file, mode, loops, optional [from, to] seconds to cut out of the source].
+## Clip name in the game -> [source file, mode, loops, optional [from, to] seconds to cut out of the source,
+## optional true to blend the loop's seam (for loops cut out of a move that wasn't shot as a loop)].
 ## ROOT_Y also moves the hips' height onto the root track (vaults and wall moves, where the body really goes up
 ## and over).
 const CLIPS := {
@@ -54,15 +55,21 @@ const CLIPS := {
 	"jump_flip": ["jumping", AIR, false],
 	"fall": ["aap_falling_idle", AIR, true],
 	"jump_down": ["jumping_down", ROOT_Y, false],
-	"land_roll": ["aap_falling_to_roll", ROOT, false],
+	# falling into a roll: cut from the moment the feet touch down, the fall itself is the game's
+	"land_roll": ["n_falling_to_roll", ROOT, false, [0.5, 2.13]],
+	"land_roll_old": ["aap_falling_to_roll", ROOT, false],
 	"land_hard": ["aap_hard_landing", ROOT, false],
-	# the source starts with a standing pause; cut it so the roll starts from a run
-	"roll": ["stand_to_roll", ROOT, false, [0.25, 2.1]],
+	# rolls out of a run (one is picked at random each time): run to rolling, and stand to roll without its
+	# standing start
+	"roll": ["n_run_to_rolling", ROOT, false, [0.5, 2.3]],
+	"roll_b": ["n_stand_to_roll", ROOT, false, [0.6, 2.05]],
 	"roll_side": ["rolling", ROOT, false],
 	"slide": ["sliding", ROOT, false],
 	# one-hand side vault, without the source's wind-up at the start and the standing tail
 	"vault": ["vaulting", ROOT_Y, false, [0.45, 2.35]],
 	"vault_high": ["vaulting", ROOT_Y, false, [0.3, 2.35]],
+	# a two-hand speed vault at full running pace
+	"vault_speed": ["n_vaulting", ROOT_Y, false],
 	# a dive over that ends mid-roll, upside down: kept for later, not used
 	"vault_dive": ["vaulting_2", ROOT_Y, false],
 	# the diagonal wall run source is two moves: running along the wall (looped) and kicking off it
@@ -74,6 +81,18 @@ const CLIPS := {
 	"shimmy_l": ["left_shimmy", INPLACE, true],
 	"shimmy_r": ["right_shimmy", INPLACE, true],
 	"wall_jump": ["jump_from_wall", ROOT_Y, false],
+	# flips in the air (double-tap jump), from takeoff to the feet coming back under him; the physics does the arc
+	"flip_front": ["n_front_flip", AIR, false, [0.45, 1.55]],
+	"flip_run": ["n_running_forward_flip", AIR, false, [0.3, 1.0]],
+	"flip_aerial": ["n_jumping", AIR, false, [0.3, 1.5]],
+	"flip_back": ["n_backflip", AIR, false, [0.6, 1.55]],
+	"jump_long": ["n_jumping_1", AIR, false, [0.0, 1.1]],
+	# running straight up a wall: the plant, then one step of the climb looped (its seam blended smooth)
+	"wall_up_start": ["n_sprint_to_wall_climb", AIR, false, [0.3, 0.733]],
+	"wall_up": ["n_sprint_to_wall_climb", AIR, true, [0.733, 1.033], true],
+	# getting up off the ground after a ragdoll (both start on his back)
+	"get_up": ["n_standing_up", INPLACE, false, [1.0, 3.9]],
+	"kip_up": ["n_kip_up", INPLACE, false],
 	"wall_flip": ["run_wall_flip", ROOT_Y, false],
 }
 ## Clip -> name of its flipped copy.
@@ -95,10 +114,13 @@ func _init() -> void:
 		var scene: Node = load(SRC + info[0] + ".fbx").instantiate()
 		var ap: AnimationPlayer = scene.find_children("*", "AnimationPlayer", true, false)[0]
 		var sk: Skeleton3D = scene.get_node(SKELETON)
-		var src := ap.get_animation(ap.get_animation_list()[0])
+		# some exports carry the mesh's bind pose as an extra "Take 001" ahead of the real take
+		var src := ap.get_animation("mixamo_com" if ap.has_animation("mixamo_com") else ap.get_animation_list()[0])
 		var span: Array = info[3] if info.size() > 3 else [0.0, src.length]
 		var anim := _bake(src, sk, info[1], span[0], min(span[1], src.length))
 		anim.loop_mode = Animation.LOOP_LINEAR if info[2] else Animation.LOOP_NONE
+		if info.size() > 4 and info[4]:
+			_blend_seam(anim)
 		lib.add_animation(clip_name, anim)
 		if MIRRORED.has(clip_name):
 			var m := _mirror(anim, sk)
@@ -119,6 +141,9 @@ func _bake(src: Animation, sk: Skeleton3D, mode: int, from: float, to: float) ->
 	var hips_rest := sk.get_bone_rest(sk.find_bone(HIPS)).origin
 	var hips_pos := src.find_track(NodePath(SKELETON + ":" + HIPS), Animation.TYPE_POSITION_3D)
 	var start := src.position_track_interpolate(hips_pos, from) if hips_pos != -1 else hips_rest
+	# the hips stay over the body's origin where the source take starts, not where the cut starts (a move cut
+	# from the middle of a run would otherwise sit meters ahead of the body)
+	var home := src.position_track_interpolate(hips_pos, 0.0) if hips_pos != -1 else hips_rest
 	var root := -1
 	var root_rot := -1
 	var hips_rot := src.find_track(NodePath(SKELETON + ":" + HIPS), Animation.TYPE_ROTATION_3D)
@@ -156,7 +181,7 @@ func _bake(src: Animation, sk: Skeleton3D, mode: int, from: float, to: float) ->
 				continue
 			var p := src.position_track_interpolate(t, from + time)
 			var travel := p - start
-			var keep := Vector3(start.x, p.y, start.z)
+			var keep := Vector3(home.x, p.y, home.z)
 			var moved := Vector3(travel.x, 0.0, travel.z)
 			if mode == AIR:
 				keep.y = start.y
@@ -169,6 +194,19 @@ func _bake(src: Animation, sk: Skeleton3D, mode: int, from: float, to: float) ->
 			if root != -1:
 				anim.position_track_insert_key(root, time, moved)
 	return anim
+
+
+## Eases the last third of a loop toward its first frame, so it wraps around without a pop.
+func _blend_seam(anim: Animation) -> void:
+	for t in anim.get_track_count():
+		if anim.track_get_type(t) != Animation.TYPE_ROTATION_3D:
+			continue
+		var first: Quaternion = anim.track_get_key_value(t, 0)
+		var n := anim.track_get_key_count(t)
+		for k in n:
+			var w := smoothstep(0.66, 1.0, float(k) / float(n - 1))
+			var q: Quaternion = anim.track_get_key_value(t, k)
+			anim.track_set_key_value(t, k, q.slerp(first, w))
 
 
 ## Mirrors across the character's side-to-side axis (X). Each bone takes its left/right twin's pose, reflected,

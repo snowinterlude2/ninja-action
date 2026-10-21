@@ -33,6 +33,7 @@ func _init() -> void:
 	_wall_run_alley(_group("3 Wall run alley", geo))
 	_drop_tower(_group("4-5 Drop tower", geo))
 	_tall_wall(_group("6 Wall flip and slopes", geo))
+	_slide_bars(_group("7 Slide under", geo))
 	_markers()
 	var ninja := NINJA.instantiate()
 	ninja.name = "Ninja"
@@ -121,6 +122,19 @@ func _tall_wall(parent: Node3D) -> void:
 	_label(parent, "slopes 20° / 35°", Vector3(-27, 4.5, -8), 0.6)
 
 
+## Bars at waist height to slide under (sprint, then C), one low and one long.
+func _slide_bars(parent: Node3D) -> void:
+	var x := 0.0
+	_label(parent, "7  SLIDE UNDER", Vector3(x, 3, -8))
+	# [z, bottom height, depth]
+	var bars := [[-12.0, 1.0, 0.3], [-18.0, 0.95, 0.3], [-24.0, 1.0, 2.0]]
+	for i in bars.size():
+		var b: Array = bars[i]
+		_box(parent, "SlideBar%d" % (i + 1), Vector3(x, b[1] + 0.25, b[0]), Vector3(3, 0.5, b[2]), ORANGE)
+		_box(parent, "SlidePostL%d" % (i + 1), Vector3(x - 1.6, (b[1] + 0.5) * 0.5, b[0]), Vector3(0.2, b[1] + 0.5, 0.2), WALL)
+		_box(parent, "SlidePostR%d" % (i + 1), Vector3(x + 1.6, (b[1] + 0.5) * 0.5, b[0]), Vector3(0.2, b[1] + 0.5, 0.2), WALL)
+
+
 func _markers() -> void:
 	var markers := _group("Teleports")
 	_marker(markers, "Spawn", Vector3(0, 0.1, 0), 0.0)
@@ -130,6 +144,7 @@ func _markers() -> void:
 	_marker(markers, "Station4", Vector3(22, 6.1, 18), PI)
 	_marker(markers, "Station5", Vector3(30, 16.1, 18), PI)
 	_marker(markers, "Station6", Vector3(-17, 0.1, 18), PI * 0.5)
+	_marker(markers, "Station7", Vector3(0, 0.1, -4), 0.0)
 
 
 func _environment() -> void:

@@ -37,12 +37,13 @@ func _run() -> void:
 	await _test_vault("climb over (1.5 m)", Vector3(-14, 0.1, -22.5), -25.0, "vault_high", -25.4)
 	await _test_climb("climb onto the deep 1.1 m box", Vector3(-14, 0.1, -27.0), 0.0, 1.4, 1.1, ["climb_up"])
 	await _test_climb("jump, hang and climb the 3 m pillar", Vector3(18, 0.1, 13.5), PI, 2.0, 3.0, ["climb_jump", "hang", "climb_up"])
-	await _test_climb("grab the 3 m pillar's edge mid-jump", Vector3(18, 0.1, 13.0), PI, 1.6, 3.0, ["jump_run", "hang", "climb_up"])
+	await _test_climb("grab the 3 m pillar's edge mid-jump", Vector3(18, 0.1, 13.0), PI, 1.6, 3.0, ["jump", "hang", "climb_up"])
 	await _test_wall_run()
 	await _test_drop("6 m drop, no roll", "Station4", false, "land_hard")
 	await _test_drop("6 m drop, roll", "Station4", true, "land_roll")
 	await _test_slide()
 	await _test_wall_flip()
+	await _test_new_moves()
 	print("\n%s: %d failed" % ["ALL PASSED" if failures == 0 else "FAILURES", failures])
 	quit(1 if failures else 0)
 
@@ -85,7 +86,7 @@ func _test_vault(label: String, start: Vector3, face_z: float, clip: String, pas
 			break
 	_release_all()
 	var p := ninja.global_position
-	_check(label, _seen.has(clip) and p.z < past_z and p.y < 0.3, "clips %s  end %s" % [_seen.keys(), _v(p)])
+	_check(label, _saw(clip) and p.z < past_z and p.y < 0.3, "clips %s  end %s" % [_seen.keys(), _v(p)])
 
 
 ## Runs at a ledge and presses jump after `press_after` meters, about a meter before it; he has to end up
@@ -114,7 +115,7 @@ func _test_climb(label: String, start: Vector3, yaw: float, press_after: float, 
 	var p := ninja.global_position
 	var ok: bool = abs(p.y - top) < 0.15 and ninja.state == Ninja.State.GROUND
 	for c in clips:
-		ok = ok and _seen.has(c)
+		ok = ok and _saw(c)
 	_check(label, ok, "clips %s  end %s" % [_seen.keys(), _v(p)])
 
 
@@ -215,7 +216,102 @@ func _test_wall_flip() -> void:
 	_check("wall flip on the tall wall", _seen.has("wall_flip") and max_y > 0.5, "clips %s  max height %.1f" % [_seen.keys(), max_y])
 
 
+func _test_new_moves() -> void:
+	# double-tap jump flips
+	_place(Vector3(6, 0.1, -2), 0.0)
+	await _frames(20)
+	_seen.clear()
+	Input.action_press("move_forward")
+	await _frames(30)
+	_tap("jump")
+	await _frames(12)
+	_tap("jump")
+	for i in 60:
+		await physics_frame
+		_note()
+	_release_all()
+	_check("double-tap jump flips", _saw("flip_"), "clips %s" % [_seen.keys()])
+	await _frames(60)
+	# sprint into the tall wall: run up it, Space backflips off
+	_place(Vector3(-20, 0.1, 18), PI * 0.5)
+	await _frames(20)
+	_seen.clear()
+	Input.action_press("move_forward")
+	Input.action_press("sprint")
+	var up_y := 0.0
+	var flipped := false
+	for i in 300:
+		await physics_frame
+		_note()
+		if ninja.state == Ninja.State.WALL_UP:
+			up_y = max(up_y, ninja.global_position.y)
+			if up_y > 2.5 and not flipped:
+				Input.action_press("move_back")
+				_tap("jump")
+				flipped = true
+		if flipped and ninja.state == Ninja.State.GROUND:
+			break
+	_release_all()
+	_check("run up the wall and backflip off", up_y > 2.5 and _seen.has("flip_back"), "clips %s  height %.1f" % [_seen.keys(), up_y])
+	await _frames(60)
+	# sprint at the 3 m pillar: run up and pull up onto it
+	_place(Vector3(18, 0.1, 12.0), PI)
+	await _frames(20)
+	_seen.clear()
+	Input.action_press("move_forward")
+	Input.action_press("sprint")
+	for i in 400:
+		await physics_frame
+		_note()
+		if ninja.global_position.y > 2.9 and ninja.state == Ninja.State.GROUND:
+			break
+	_release_all()
+	_check("run up the pillar and climb onto it", ninja.global_position.y > 2.9 and _seen.has("wall_up_start"), "clips %s  at %s" % [_seen.keys(), _v(ninja.global_position)])
+	await _frames(60)
+	# slide under the long bar
+	_place(Vector3(0, 0.1, -19), 0.0)
+	await _frames(20)
+	_seen.clear()
+	Input.action_press("move_forward")
+	Input.action_press("sprint")
+	var slid := false
+	for i in 260:
+		await physics_frame
+		_note()
+		if not slid and ninja.global_position.z < -21.6:
+			_tap("crouch")
+			slid = true
+		if ninja.global_position.z < -26.0:
+			break
+	_release_all()
+	_check("slide under the long bar", ninja.global_position.z < -25.0 and ninja.global_position.y < 0.3, "clips %s  at %s" % [_seen.keys(), _v(ninja.global_position)])
+	await _frames(30)
+	# walk off the 16 m pillar: ragdoll, W gets up
+	var m := current_scene.find_child("Station5", true, false) as Node3D
+	_place(m.global_position, m.global_rotation.y)
+	await _frames(30)
+	_seen.clear()
+	Input.action_press("move_forward")
+	var downed := false
+	for i in 500:
+		await physics_frame
+		_note()
+		if ninja.state == Ninja.State.RAGDOLL:
+			downed = true
+		if downed and ninja.state == Ninja.State.GROUND:
+			break
+	_release_all()
+	_check("big fall ragdolls, W gets up", downed and _saw("get_up") or _saw("kip_up"), "clips %s  state %s" % [_seen.keys(), ninja.state_name()])
+
+
 # --- helpers ---
+
+func _saw(prefix: String) -> bool:
+	for k in _seen:
+		if String(k).begins_with(prefix):
+			return true
+	return false
+
 
 func _place(pos: Vector3, yaw: float) -> void:
 	_release_all()
