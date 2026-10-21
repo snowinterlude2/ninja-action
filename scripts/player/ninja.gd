@@ -371,13 +371,11 @@ func _land() -> void:
 		velocity = Vector3.ZERO
 		_start_action("land_hard", {"cancel_at": 0.55})
 		_sfx.play("impact")
-		_sfx.voice("pain")
 	elif last_drop >= safe_drop:
 		velocity.x *= 0.3
 		velocity.z *= 0.3
 		_start_action("land_hard", {"speed": 1.6, "cancel_at": 0.3})
 		_sfx.play("land")
-		_sfx.voice("pain", -4.0)
 	else:
 		_set_state(State.GROUND)
 		_sfx.play("land", -6.0 if last_drop < 1.0 else 0.0)
@@ -1036,7 +1034,6 @@ func _start_ragdoll(impact: Vector3) -> void:
 		_ragdoll.add_child(pb)
 	_ragdoll.physical_bones_start_simulation()
 	_sfx.play("impact")
-	_sfx.voice("pain_big")
 	# carry the fall into the bones, a little forward and down
 	await get_tree().physics_frame
 	if _ragdoll == null:
