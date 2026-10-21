@@ -3,6 +3,7 @@ extends SceneTree
 ## For each clip it renames it, sets looping, and splits the hips' travel off the hips:
 ##   INPLACE  - drops the hips' sideways and forward travel (keeps the bob), for loops the code moves.
 ##   AIR      - also drops the hips' rise and fall, so jumps don't double the physics arc.
+##   AIR_FLAT - AIR, and also takes the hips' turn off them, so the code decides which way the body faces.
 ##   ROOT     - moves the travel onto a "RootMotion" track that the controller reads and applies to the body, and
 ##              takes the hips' turn off them too (onto a RootMotion rotation track), so the body stays facing
 ##              the way the move goes instead of ending sideways.
@@ -10,7 +11,7 @@ extends SceneTree
 ## Run headless after importing:
 ##   godot --headless --import ; godot --headless --script res://tools/bake_animations.gd
 
-enum { INPLACE, AIR, ROOT, ROOT_Y }
+enum { INPLACE, AIR, ROOT, ROOT_Y, AIR_FLAT }
 
 const SRC := "res://assets/animations/source/"
 const OUT := "res://assets/animations/ninja_locomotion.res"
@@ -20,14 +21,17 @@ const HIPS := PREFIX + "Hips"
 ## Where root motion lands. A Node3D with this name sits under the ninja's model root.
 const ROOT_TRACK := "RootMotion"
 const FPS := 30.0
+## The hips' height when the ninja stands (meters), from the idle clip.
+const STAND_HIPS := 0.93
 
-## Clip name in the game -> [source file, mode, loops]. ROOT_Y also moves the hips' height onto the root track
-## (vaults and wall moves, where the body really goes up and over).
+## Clip name in the game -> [source file, mode, loops, optional [from, to] seconds to cut out of the source].
+## ROOT_Y also moves the hips' height onto the root track (vaults and wall moves, where the body really goes up
+## and over).
 const CLIPS := {
 	"idle": ["mlp_idle", INPLACE, true],
 	"walk": ["mlp_walking", INPLACE, true],
-	"run": ["mlp_standard_run", INPLACE, true],
-	"run_alt": ["aap_running", INPLACE, true],
+	"run": ["aap_running", INPLACE, true],
+	"run_alt": ["mlp_standard_run", INPLACE, true],
 	"sprint": ["sprint", INPLACE, true],
 	"strafe_walk_l": ["mlp_left_strafe_walking", INPLACE, true],
 	"strafe_walk_r": ["mlp_right_strafe_walking", INPLACE, true],
@@ -52,12 +56,21 @@ const CLIPS := {
 	"jump_down": ["jumping_down", ROOT_Y, false],
 	"land_roll": ["aap_falling_to_roll", ROOT, false],
 	"land_hard": ["aap_hard_landing", ROOT, false],
-	"roll": ["stand_to_roll", ROOT, false],
+	# the source starts with a standing pause; cut it so the roll starts from a run
+	"roll": ["stand_to_roll", ROOT, false, [0.25, 2.1]],
 	"roll_side": ["rolling", ROOT, false],
 	"slide": ["sliding", ROOT, false],
-	"vault_high": ["vaulting", ROOT_Y, false],
-	"vault": ["vaulting_2", ROOT_Y, false],
-	"wall_run": ["diagonal_wall_run", ROOT_Y, false],
+	# one-hand side vault, without the source's wind-up at the start and the standing tail
+	"vault": ["vaulting", ROOT_Y, false, [0.45, 2.35]],
+	"vault_high": ["vaulting", ROOT_Y, false, [0.3, 2.35]],
+	# a dive over that ends mid-roll, upside down: kept for later, not used
+	"vault_dive": ["vaulting_2", ROOT_Y, false],
+	# the diagonal wall run source is two moves: running along the wall (looped) and kicking off it
+	"wall_run": ["diagonal_wall_run", AIR_FLAT, true, [0.1, 0.6]],
+	"wall_kick": ["diagonal_wall_run", AIR_FLAT, false, [0.6, 1.13]],
+	"climb_jump": ["jump_to_hang", AIR, false, [0.0, 1.5]],
+	"climb_up": ["climbing_to_top", ROOT_Y, false],
+	"hang": ["hanging_idle", INPLACE, true],
 	"wall_jump": ["jump_from_wall", ROOT_Y, false],
 	"wall_flip": ["run_wall_flip", ROOT_Y, false],
 }
@@ -65,6 +78,7 @@ const CLIPS := {
 const MIRRORED := {
 	"wall_run": "wall_run_mirror",
 	"wall_jump": "wall_jump_mirror",
+	"wall_kick": "wall_kick_mirror",
 	"vault": "vault_mirror",
 	"vault_high": "vault_high_mirror",
 	"run_turn": "run_turn_mirror",
@@ -80,7 +94,8 @@ func _init() -> void:
 		var ap: AnimationPlayer = scene.find_children("*", "AnimationPlayer", true, false)[0]
 		var sk: Skeleton3D = scene.get_node(SKELETON)
 		var src := ap.get_animation(ap.get_animation_list()[0])
-		var anim := _bake(src, sk, info[1])
+		var span: Array = info[3] if info.size() > 3 else [0.0, src.length]
+		var anim := _bake(src, sk, info[1], span[0], min(span[1], src.length))
 		anim.loop_mode = Animation.LOOP_LINEAR if info[2] else Animation.LOOP_NONE
 		lib.add_animation(clip_name, anim)
 		if MIRRORED.has(clip_name):
@@ -95,17 +110,20 @@ func _init() -> void:
 
 
 ## Resamples every bone at FPS, so the mirror step and the root split work on matching keys.
-func _bake(src: Animation, sk: Skeleton3D, mode: int) -> Animation:
+func _bake(src: Animation, sk: Skeleton3D, mode: int, from: float, to: float) -> Animation:
 	var anim := Animation.new()
-	anim.length = src.length
-	var frames := int(round(src.length * FPS))
+	anim.length = to - from
+	var frames := int(round(anim.length * FPS))
 	var hips_rest := sk.get_bone_rest(sk.find_bone(HIPS)).origin
 	var hips_pos := src.find_track(NodePath(SKELETON + ":" + HIPS), Animation.TYPE_POSITION_3D)
-	var start := src.position_track_interpolate(hips_pos, 0.0) if hips_pos != -1 else hips_rest
+	var start := src.position_track_interpolate(hips_pos, from) if hips_pos != -1 else hips_rest
 	var root := -1
 	var root_rot := -1
 	var hips_rot := src.find_track(NodePath(SKELETON + ":" + HIPS), Animation.TYPE_ROTATION_3D)
-	var start_rot := src.rotation_track_interpolate(hips_rot, 0.0) if hips_rot != -1 else Quaternion()
+	var start_rot := src.rotation_track_interpolate(hips_rot, from) if hips_rot != -1 else Quaternion()
+	var flat_yaw := mode == AIR_FLAT
+	if mode == AIR_FLAT:
+		mode = AIR
 	if mode == ROOT or mode == ROOT_Y:
 		root = anim.add_track(Animation.TYPE_POSITION_3D)
 		anim.track_set_path(root, NodePath(ROOT_TRACK))
@@ -122,26 +140,29 @@ func _bake(src: Animation, sk: Skeleton3D, mode: int) -> Animation:
 		var nt := anim.add_track(type)
 		anim.track_set_path(nt, src.track_get_path(t))
 		for f in frames + 1:
-			var time: float = min(f / FPS, src.length)
+			var time: float = min(f / FPS, anim.length)
 			if type == Animation.TYPE_ROTATION_3D:
-				var q := src.rotation_track_interpolate(t, time)
-				if root_rot != -1 and t == hips_rot:
+				var q := src.rotation_track_interpolate(t, from + time)
+				if (root_rot != -1 or flat_yaw) and t == hips_rot:
 					# the hips' turn since the first frame (its twist around up) goes to the root track
 					var rel := q * start_rot.inverse()
 					var yaw := Quaternion(0.0, rel.y, 0.0, rel.w).normalized()
 					q = yaw.inverse() * q
-					anim.rotation_track_insert_key(root_rot, time, yaw)
+					if root_rot != -1:
+						anim.rotation_track_insert_key(root_rot, time, yaw)
 				anim.rotation_track_insert_key(nt, time, q)
 				continue
-			var p := src.position_track_interpolate(t, time)
+			var p := src.position_track_interpolate(t, from + time)
 			var travel := p - start
 			var keep := Vector3(start.x, p.y, start.z)
 			var moved := Vector3(travel.x, 0.0, travel.z)
 			if mode == AIR:
 				keep.y = start.y
 			elif mode == ROOT_Y:
-				keep.y = start.y
-				moved.y = travel.y
+				# the pose keeps standing hip height and the root track carries how far the feet are off the
+				# ground, so a clip shot standing on a box (vaulting) or hanging (climbing) is measured the same way
+				keep.y = STAND_HIPS
+				moved.y = p.y - STAND_HIPS
 			anim.position_track_insert_key(nt, time, keep)
 			if root != -1:
 				anim.position_track_insert_key(root, time, moved)
