@@ -1,0 +1,436 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://shaders/grid.gdshader" id="1_p21b5"]
+[ext_resource type="PackedScene" path="res://scenes/ninja.tscn" id="2_bdpbv"]
+[ext_resource type="Script" path="res://scripts/player/ninja.gd" id="3_ss0f2"]
+[ext_resource type="Script" path="res://scripts/debug/debug_hud.gd" id="4_kddbv"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_pw728"]
+
+[sub_resource type="Sky" id="Sky_6gsqv"]
+sky_material = SubResource("ProceduralSkyMaterial_pw728")
+
+[sub_resource type="Environment" id="Environment_u56q5"]
+background_mode = 2
+sky = SubResource("Sky_6gsqv")
+ambient_light_source = 3
+tonemap_mode = 2
+ssao_enabled = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4mr4y"]
+render_priority = 0
+shader = ExtResource("1_p21b5")
+shader_parameter/albedo = Color(0.52, 0.53, 0.55, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_36mki"]
+render_priority = 0
+shader = ExtResource("1_p21b5")
+shader_parameter/albedo = Color(0.62, 0.62, 0.6, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6751p"]
+render_priority = 0
+shader = ExtResource("1_p21b5")
+shader_parameter/albedo = Color(0.85, 0.85, 0.3, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_o5gif"]
+render_priority = 0
+shader = ExtResource("1_p21b5")
+shader_parameter/albedo = Color(0.9, 0.55, 0.2, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_uutrq"]
+render_priority = 0
+shader = ExtResource("1_p21b5")
+shader_parameter/albedo = Color(0.3, 0.5, 0.85, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_34ald"]
+render_priority = 0
+shader = ExtResource("1_p21b5")
+shader_parameter/albedo = Color(0.25, 0.7, 0.65, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_a5r8l"]
+render_priority = 0
+shader = ExtResource("1_p21b5")
+shader_parameter/albedo = Color(0.3, 0.2, 0.2, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lcvph"]
+render_priority = 0
+shader = ExtResource("1_p21b5")
+shader_parameter/albedo = Color(0.55, 0.4, 0.8, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eukwx"]
+render_priority = 0
+shader = ExtResource("1_p21b5")
+shader_parameter/albedo = Color(0.8, 0.3, 0.3, 1)
+shader_parameter/line_width = null
+shader_parameter/line_strength = null
+
+[node name="TestMap" type="Node3D" unique_id=16837592]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=997727254]
+environment = SubResource("Environment_u56q5")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=366583760]
+transform = Transform3D(0.81915206, 0.43938506, -0.36868784, 0, 0.64278764, 0.76604444, 0.57357645, -0.62750685, 0.5265408, 0, 0, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 80.0
+
+[node name="Geometry" type="Node3D" parent="." unique_id=1041538059]
+
+[node name="Floor" type="CSGBox3D" parent="Geometry" unique_id=799717391]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+use_collision = true
+size = Vector3(80, 1, 80)
+material = SubResource("ShaderMaterial_4mr4y")
+
+[node name="Wall0" type="CSGBox3D" parent="Geometry" unique_id=1479393298]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 40.5)
+use_collision = true
+size = Vector3(82, 4, 1)
+material = SubResource("ShaderMaterial_36mki")
+
+[node name="Wall1" type="CSGBox3D" parent="Geometry" unique_id=832978288]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -40.5)
+use_collision = true
+size = Vector3(82, 4, 1)
+material = SubResource("ShaderMaterial_36mki")
+
+[node name="Wall2" type="CSGBox3D" parent="Geometry" unique_id=1121661119]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.5, 2, 0)
+use_collision = true
+size = Vector3(1, 4, 82)
+material = SubResource("ShaderMaterial_36mki")
+
+[node name="Wall3" type="CSGBox3D" parent="Geometry" unique_id=1152442725]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.5, 2, 0)
+use_collision = true
+size = Vector3(1, 4, 82)
+material = SubResource("ShaderMaterial_36mki")
+
+[node name="SpawnPad" type="CSGBox3D" parent="Geometry" unique_id=372563751]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+use_collision = true
+size = Vector3(3, 0.02, 3)
+material = SubResource("ShaderMaterial_6751p")
+
+[node name="1 Vault lane" type="Node3D" parent="Geometry" unique_id=1031427978]
+
+[node name="Label_1__VAULT_LANE" type="Label3D" parent="Geometry/1 Vault lane" unique_id=1904660808]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3, -6)
+pixel_size = 0.01
+billboard = 1
+text = "1  VAULT LANE"
+font_size = 64
+
+[node name="Vault1_60cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=1551399770]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.3, -10)
+use_collision = true
+size = Vector3(3, 0.6, 0.4)
+material = SubResource("ShaderMaterial_o5gif")
+
+[node name="Label_0_6_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=1319177886]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1, -10)
+billboard = 1
+text = "0.6 m"
+font_size = 64
+
+[node name="Vault2_90cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=212070049]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.45, -15)
+use_collision = true
+size = Vector3(3, 0.9, 0.5)
+material = SubResource("ShaderMaterial_o5gif")
+
+[node name="Label_0_9_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=54402920]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.3, -15)
+billboard = 1
+text = "0.9 m"
+font_size = 64
+
+[node name="Vault3_100cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=1034293877]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.5, -20)
+use_collision = true
+size = Vector3(3, 1, 0.8)
+material = SubResource("ShaderMaterial_o5gif")
+
+[node name="Label_1_0_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=822265868]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.4, -20)
+billboard = 1
+text = "1.0 m"
+font_size = 64
+
+[node name="Vault4_150cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=461665511]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.75, -25)
+use_collision = true
+size = Vector3(3, 1.5, 0.4)
+material = SubResource("ShaderMaterial_o5gif")
+
+[node name="Label_1_5_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=1976410602]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.9, -25)
+billboard = 1
+text = "1.5 m"
+font_size = 64
+
+[node name="Vault5_110cm" type="CSGBox3D" parent="Geometry/1 Vault lane" unique_id=793687655]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.55, -30)
+use_collision = true
+size = Vector3(3, 1.1, 1.2)
+material = SubResource("ShaderMaterial_o5gif")
+
+[node name="Label_1_1_m" type="Label3D" parent="Geometry/1 Vault lane" unique_id=440567505]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.5, -30)
+billboard = 1
+text = "1.1 m"
+font_size = 64
+
+[node name="2 Jump gaps" type="Node3D" parent="Geometry" unique_id=164264524]
+
+[node name="Label_2__JUMP_GAPS" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=1759585753]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 4, -4)
+pixel_size = 0.01
+billboard = 1
+text = "2  JUMP GAPS"
+font_size = 64
+
+[node name="Ramp" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=378004433]
+transform = Transform3D(1, 0, 0, 0, 0.9486833, -0.31622776, 0, 0.31622776, 0.9486833, 14, 0.81026334, -7.063246)
+use_collision = true
+size = Vector3(3, 0.4, 6.3245554)
+material = SubResource("ShaderMaterial_uutrq")
+
+[node name="Platform1" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=559182258]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -12)
+use_collision = true
+size = Vector3(3, 2, 4)
+material = SubResource("ShaderMaterial_uutrq")
+
+[node name="Platform2" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=1877494630]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -17.5)
+use_collision = true
+size = Vector3(3, 2, 3)
+material = SubResource("ShaderMaterial_uutrq")
+
+[node name="Label_gap_2_m" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=1495435586]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -15.2)
+pixel_size = 0.006
+billboard = 1
+text = "gap 2 m"
+font_size = 64
+
+[node name="Platform3" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=1526290663]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -24)
+use_collision = true
+size = Vector3(3, 2, 3)
+material = SubResource("ShaderMaterial_uutrq")
+
+[node name="Label_gap_3_5_m" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=177485926]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -21.7)
+pixel_size = 0.006
+billboard = 1
+text = "gap 3.5 m"
+font_size = 64
+
+[node name="Platform4" type="CSGBox3D" parent="Geometry/2 Jump gaps" unique_id=1998630417]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -32.5)
+use_collision = true
+size = Vector3(3, 2, 4)
+material = SubResource("ShaderMaterial_uutrq")
+
+[node name="Label_gap_5_m" type="Label3D" parent="Geometry/2 Jump gaps" unique_id=660057767]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -29.7)
+pixel_size = 0.006
+billboard = 1
+text = "gap 5 m"
+font_size = 64
+
+[node name="3 Wall run alley" type="Node3D" parent="Geometry" unique_id=1939919686]
+
+[node name="Label_3__WALL_RUN_ALLEY" type="Label3D" parent="Geometry/3 Wall run alley" unique_id=1374420627]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 8)
+pixel_size = 0.01
+billboard = 1
+text = "3  WALL RUN ALLEY"
+font_size = 64
+
+[node name="AlleyWallL" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=677926953]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 3, 21)
+use_collision = true
+size = Vector3(0.5, 6, 22)
+material = SubResource("ShaderMaterial_34ald")
+
+[node name="AlleyWallR" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=1180512987]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.25, 3, 21)
+use_collision = true
+size = Vector3(0.5, 6, 22)
+material = SubResource("ShaderMaterial_34ald")
+
+[node name="Label_3b__WALL_RUN_ACROSS" type="Label3D" parent="Geometry/3 Wall run alley" unique_id=1665833294]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 6, 10)
+pixel_size = 0.01
+billboard = 1
+text = "3b  WALL RUN ACROSS"
+font_size = 64
+
+[node name="LedgeStart" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=1380393942]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.75, 11.5)
+use_collision = true
+size = Vector3(3, 1.5, 3)
+material = SubResource("ShaderMaterial_34ald")
+
+[node name="LedgeEnd" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=615319504]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.75, 26.5)
+use_collision = true
+size = Vector3(3, 1.5, 3)
+material = SubResource("ShaderMaterial_34ald")
+
+[node name="RunWall" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=620631972]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 3, 19)
+use_collision = true
+size = Vector3(0.5, 6, 18)
+material = SubResource("ShaderMaterial_34ald")
+
+[node name="NoTouchFloor" type="CSGBox3D" parent="Geometry/3 Wall run alley" unique_id=1606404447]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.01, 19)
+use_collision = true
+size = Vector3(3, 0.02, 12)
+material = SubResource("ShaderMaterial_a5r8l")
+
+[node name="4-5 Drop tower" type="Node3D" parent="Geometry" unique_id=690811552]
+
+[node name="Label_4-5__DROP_TOWER" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=1658088651]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 18, 12)
+pixel_size = 0.01
+billboard = 1
+text = "4-5  DROP TOWER"
+font_size = 64
+
+[node name="Pillar_3m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=68501057]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1.5, 18)
+use_collision = true
+size = Vector3(3, 3, 3)
+material = SubResource("ShaderMaterial_lcvph")
+
+[node name="Label_3_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=317117065]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 3.6, 16.4)
+pixel_size = 0.006
+billboard = 1
+text = "3 m"
+font_size = 64
+
+[node name="Pillar_6m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=1712433193]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 3, 18)
+use_collision = true
+size = Vector3(3, 6, 3)
+material = SubResource("ShaderMaterial_lcvph")
+
+[node name="Label_6_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=557613812]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 6.6, 16.4)
+pixel_size = 0.006
+billboard = 1
+text = "6 m"
+font_size = 64
+
+[node name="Pillar_10m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=1091454577]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 5, 18)
+use_collision = true
+size = Vector3(3, 10, 3)
+material = SubResource("ShaderMaterial_lcvph")
+
+[node name="Label_10_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=2125611050]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 10.6, 16.4)
+pixel_size = 0.006
+billboard = 1
+text = "10 m"
+font_size = 64
+
+[node name="Pillar_16m" type="CSGBox3D" parent="Geometry/4-5 Drop tower" unique_id=809719409]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 8, 18)
+use_collision = true
+size = Vector3(3, 16, 3)
+material = SubResource("ShaderMaterial_lcvph")
+
+[node name="Label_16_m" type="Label3D" parent="Geometry/4-5 Drop tower" unique_id=157212878]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 16.6, 16.4)
+pixel_size = 0.006
+billboard = 1
+text = "16 m"
+font_size = 64
+
+[node name="6 Wall flip and slopes" type="Node3D" parent="Geometry" unique_id=841629290]
+
+[node name="Label_6__WALL_FLIP" type="Label3D" parent="Geometry/6 Wall flip and slopes" unique_id=250415166]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 7, 18)
+pixel_size = 0.01
+billboard = 1
+text = "6  WALL FLIP"
+font_size = 64
+
+[node name="TallWall" type="CSGBox3D" parent="Geometry/6 Wall flip and slopes" unique_id=2011720028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 3, 18)
+use_collision = true
+size = Vector3(1, 6, 8)
+material = SubResource("ShaderMaterial_eukwx")
+
+[node name="Slope20" type="CSGBox3D" parent="Geometry/6 Wall flip and slopes" unique_id=1037522224]
+transform = Transform3D(1, 0, 0, 0, 0.93887633, -0.34425464, 0, 0.34425464, 0.93887633, -24, 0.91222477, -9.0688505)
+use_collision = true
+size = Vector3(4, 0.4, 6.3906183)
+material = SubResource("ShaderMaterial_4mr4y")
+
+[node name="Slope35" type="CSGBox3D" parent="Geometry/6 Wall flip and slopes" unique_id=1058060037]
+transform = Transform3D(1, 0, 0, 0, 0.8192319, -0.5734623, 0, 0.5734623, 0.8192319, -30, 1.5861536, -8.614693)
+use_collision = true
+size = Vector3(4, 0.4, 6.1032777)
+material = SubResource("ShaderMaterial_4mr4y")
+
+[node name="Label_slopes_20°___35°" type="Label3D" parent="Geometry/6 Wall flip and slopes" unique_id=696800801]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 4.5, -8)
+pixel_size = 0.006
+billboard = 1
+text = "slopes 20° / 35°"
+font_size = 64
+
+[node name="Teleports" type="Node3D" parent="." unique_id=1373566110]
+
+[node name="Spawn" type="Marker3D" parent="Teleports" unique_id=2115056305]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+
+[node name="Station1" type="Marker3D" parent="Teleports" unique_id=494063888]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.1, -4)
+
+[node name="Station2" type="Marker3D" parent="Teleports" unique_id=1320910765]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.1, -1)
+
+[node name="Station3" type="Marker3D" parent="Teleports" unique_id=715619369]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.1, 5)
+
+[node name="Station4" type="Marker3D" parent="Teleports" unique_id=194693761]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 22, 6.1, 18)
+
+[node name="Station5" type="Marker3D" parent="Teleports" unique_id=571389341]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 30, 16.1, 18)
+
+[node name="Station6" type="Marker3D" parent="Teleports" unique_id=2093104799]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -17, 0.1, 18)
+
+[node name="Ninja" type="CharacterBody3D" parent="." unique_id=1098485598 instance=ExtResource("2_bdpbv")]
+collision_layer = 2
+floor_snap_length = 0.3
+script = ExtResource("3_ss0f2")
+
+[node name="DebugHud" type="CanvasLayer" parent="." unique_id=1874078910]
+script = ExtResource("4_kddbv")
