@@ -16,7 +16,7 @@ you start on the yellow pad in the middle of the greybox test map.
 | Run backwards | S on its own: he backs up still facing the camera |
 | Run up a wall | sprint (Shift) straight into a tall wall: two fast steps up it, then he drops unless you press Space (or S + Space) to backflip off; grabs the top if he reaches it (W pulls up) |
 | Hang | jump into a ledge (or Space at one over 1.7 m) to grab it; W or Space climbs up, S or C lets go, A / D shimmy along |
-| Roll / slide | C or Ctrl rolls (slide when sprinting, and he keeps sliding while there's a bar over him); falls over 4 m roll on their own |
+| Roll | C or Ctrl rolls forward (he stays low while there's a bar over him); falls over 4 m roll on their own |
 | Get up | after a fall too high (over 9.5 m without a roll) he ragdolls; W gets him back up |
 | Test helpers | 1-6 teleport to stations, R back to spawn, T slow motion, F1 hide the help panel, Esc free the mouse |
 

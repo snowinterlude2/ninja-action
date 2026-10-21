@@ -188,7 +188,7 @@ func _test_slide() -> void:
 		await physics_frame
 		_note()
 	_release_all()
-	_check("slide from a sprint", _seen.has("slide"), "clips %s" % [_seen.keys()])
+	_check("C at a sprint rolls", _seen.has("roll"), "clips %s" % [_seen.keys()])
 	await _frames(60)
 
 
@@ -283,7 +283,7 @@ func _test_new_moves() -> void:
 		if ninja.global_position.z < -26.0:
 			break
 	_release_all()
-	_check("slide under the long bar", ninja.global_position.z < -25.0 and ninja.global_position.y < 0.3, "clips %s  at %s" % [_seen.keys(), _v(ninja.global_position)])
+	_check("roll under the long bar", ninja.global_position.z < -25.0 and ninja.global_position.y < 0.3, "clips %s  at %s" % [_seen.keys(), _v(ninja.global_position)])
 	await _frames(30)
 	# walk off the 16 m pillar: ragdoll, W gets up
 	var m := current_scene.find_child("Station5", true, false) as Node3D

@@ -4,6 +4,8 @@ extends SceneTree
 ##   INPLACE  - drops the hips' sideways and forward travel (keeps the bob), for loops the code moves.
 ##   AIR      - also drops the hips' rise and fall, so jumps don't double the physics arc.
 ##   AIR_FLAT - AIR, and also takes the hips' turn off them, so the code decides which way the body faces.
+##   ROOT_SPIN - ROOT, but the hips keep their whole rotation (a forward roll tumbles head over heels, and pulling
+##              a "turn" out of an upside-down hips twists the body mid-roll).
 ##   ROOT     - moves the travel onto a "RootMotion" track that the controller reads and applies to the body, and
 ##              takes the hips' turn off them too (onto a RootMotion rotation track), so the body stays facing
 ##              the way the move goes instead of ending sideways.
@@ -11,7 +13,7 @@ extends SceneTree
 ## Run headless after importing:
 ##   godot --headless --import ; godot --headless --script res://tools/bake_animations.gd
 
-enum { INPLACE, AIR, ROOT, ROOT_Y, AIR_FLAT }
+enum { INPLACE, AIR, ROOT, ROOT_Y, AIR_FLAT, ROOT_SPIN }
 
 const SRC := "res://assets/animations/source/"
 const OUT := "res://assets/animations/ninja_locomotion.res"
@@ -60,7 +62,7 @@ const CLIPS := {
 	"land_roll_old": ["aap_falling_to_roll", ROOT, false],
 	"land_hard": ["aap_hard_landing", ROOT, false],
 	# the roll (C, and landing a big fall): snow's Sprinting Forward Roll
-	"roll": ["n_sprint_roll", ROOT, false],
+	"roll": ["n_sprint_roll", ROOT_SPIN, false],
 	"roll_side": ["rolling", ROOT, false],
 	"slide": ["sliding", ROOT, false],
 	# one-hand side vault, without the source's wind-up at the start and the standing tail
@@ -151,6 +153,9 @@ func _bake(src: Animation, sk: Skeleton3D, mode: int, from: float, to: float) ->
 	var flat_yaw := mode == AIR_FLAT
 	if mode == AIR_FLAT:
 		mode = AIR
+	var keep_spin := mode == ROOT_SPIN
+	if mode == ROOT_SPIN:
+		mode = ROOT
 	if mode == ROOT or mode == ROOT_Y:
 		root = anim.add_track(Animation.TYPE_POSITION_3D)
 		anim.track_set_path(root, NodePath(ROOT_TRACK))
@@ -170,7 +175,7 @@ func _bake(src: Animation, sk: Skeleton3D, mode: int, from: float, to: float) ->
 			var time: float = min(f / FPS, anim.length)
 			if type == Animation.TYPE_ROTATION_3D:
 				var q := src.rotation_track_interpolate(t, from + time)
-				if (root_rot != -1 or flat_yaw) and t == hips_rot:
+				if (root_rot != -1 or flat_yaw) and t == hips_rot and not keep_spin:
 					# the hips' turn since the first frame (its twist around up) goes to the root track
 					var rel := q * start_rot.inverse()
 					var yaw := Quaternion(0.0, rel.y, 0.0, rel.w).normalized()

@@ -230,11 +230,8 @@ func _ground(delta: float) -> void:
 	if _t - _crouch_at < 0.05:
 		_crouch_at = -10.0
 		var speed := flat.length()
-		if speed > (run_speed + sprint_speed) * 0.5:
-			_start_action("slide", {"xz_scale": clamp(speed / 4.5, 0.8, 1.5), "low": true, "cancel_at": 0.8, "keep_speed": true})
-			_sfx.play("whoosh", -6.0)
-		else:
-			_roll(max(speed, run_speed))
+		# C / Ctrl only ever rolls (it also gets him under the low bars: he stays low while there's a bar over him)
+		_roll(max(speed, run_speed))
 		return
 	if backing and flat.length() > 0.15:
 		# the run (or walk) played backwards
@@ -249,9 +246,10 @@ func _ground(delta: float) -> void:
 
 ## The roll (C / Ctrl): always the sprinting forward roll, the way the stick points.
 func _roll(speed: float) -> void:
-	# roll the way the stick points, straight away
+	# roll straight forward the way the stick points (or the way he faces)
 	if move_input().length() > 0.1:
 		_face(move_input(), 1.0, 1000.0)
+	velocity = -global_basis.z * speed
 	# the clip covers 5.7 m at a sprint; from slower it goes less far
 	_start_action("roll", {
 		"warp_distance": clamp(speed * 0.9, 3.5, 5.7),
